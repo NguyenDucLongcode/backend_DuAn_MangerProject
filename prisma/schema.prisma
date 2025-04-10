@@ -48,7 +48,7 @@ enum SubscriptionPlan {
 
 // USERS & AUTHENTICATION
 model User {
-    id         Int        @id @default(autoincrement())       // Khóa chính, tự động tăng
+    id         String   @id @default(uuid())                  // Khóa chính
     name       String?                                        // Tên User
     email      String     @unique                             // Email user  (duy nhất)
     password   String                                         // Mật khẩu user
@@ -56,6 +56,7 @@ model User {
     address    String?                                        // Địa chỉ
     gender     String?                                        // Giới tính
     role       UserRoleEnum @default(CUSTOMER)                // Vị trí user (mặc định là customer)
+    isActive   Boolean   @default(false)                      // Trạng thái xác thực email
     createdAt  DateTime  @default(now())                      // Ngày tạo user
     
     // Quan hệ với các nhóm mà người dùng quản lý (Lãnh đạo nhóm)
@@ -90,10 +91,10 @@ model User {
 }
 
 model RefreshToken {
-    id        Int     @id @default(autoincrement())        // Khóa chính, tự động tăng
-    userId    Int     @unique                              // Mỗi user chỉ có một refresh token duy nhất
-    token     String                                       // Giá trị của refresh token
-    expiresAt DateTime                                     // Thời gian token hết hạn
+    id             String   @id @default(uuid())                // Khóa chính, tự động tăng
+    userId         String    @unique                            // Mỗi user chỉ có một refresh token duy nhất
+    token          String                                       // Giá trị của refresh token
+    expiresAt      DateTime                                     // Thời gian token hết hạn
    
    // Quan hệ với User: Mỗi RefreshToken thuộc về một User cụ thể
    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -101,12 +102,12 @@ model RefreshToken {
 
 // GROUP MANAGEMENT
 model GroupDev {
-    id          Int      @id @default(autoincrement())     // Khóa chính, tự động tăng
-    name        String                                     // Tên nhóm
-    description String?                                    // Mô tả nhóm (tuỳ chọn)
-    visibility  GroupVisibilityEnum @default(PRIVATE)      // Chế độ hiển thị nhóm (private, public, restricted)
-    maxMembers  Int?                                       // Số lượng thành viên tối đa (tuỳ chọn)
-    createdAt   DateTime @default(now())                   // Thời gian nhóm được tạo
+    id            String   @id @default(uuid())              // Khóa chính
+    name          String                                     // Tên nhóm
+    description   String?                                    // Mô tả nhóm (tuỳ chọn)
+    visibility    GroupVisibilityEnum @default(PRIVATE)      // Chế độ hiển thị nhóm (private, public, restricted)
+    maxMembers    Int?                                       // Số lượng thành viên tối đa (tuỳ chọn)
+    createdAt     DateTime @default(now())                   // Thời gian nhóm được tạo
     
     // Quan hệ với các lãnh đạo nhóm (GroupLeader)
     leaders     GroupLeader[]
@@ -122,10 +123,10 @@ model GroupDev {
 }
 
 model GroupLeader {
-    id        Int @id @default(autoincrement())         // Khóa chính, tự động tăng
-    groupId   Int                                       // Mã nhóm mà người lãnh đạo thuộc về
-    userId    Int                                       // Mã người dùng (User) là lãnh đạo của nhóm
-    createdAt DateTime @default(now())                  // Thời gian tạo khi người dùng được chỉ định làm lãnh đạo nhóm
+    id           String   @id @default(uuid())             // Khóa chính
+    groupId      String                                    // Mã nhóm mà người lãnh đạo thuộc về
+    userId       String                                    // Mã người dùng (User) là lãnh đạo của nhóm
+    createdAt    DateTime @default(now())                  // Thời gian tạo khi người dùng được chỉ định làm lãnh đạo nhóm
     
     // Quan hệ với GroupDev: Mỗi GroupLeader thuộc về một GroupDev (nhóm phát triển)
     group     GroupDev @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -138,9 +139,9 @@ model GroupLeader {
 }
 
 model GroupMember {
-    id        Int @id @default(autoincrement())           // Khóa chính, tự động tăng
-    groupId   Int                                         // Mã nhóm mà thành viên thuộc về
-    userId    Int                                         // Mã người dùng (User) là thành viên của nhóm
+    id        String   @id @default(uuid())               // Khóa chính
+    groupId   String                                         // Mã nhóm mà thành viên thuộc về
+    userId    String                                         // Mã người dùng (User) là thành viên của nhóm
     joinedAt  DateTime @default(now())                    // Thời gian tham gia nhóm
     
     // Quan hệ với GroupDev: Mỗi thành viên thuộc về một GroupDev (nhóm phát triển)
@@ -155,12 +156,12 @@ model GroupMember {
 
 // SUBSCRIPTIONS
 model Subscription {
-    id         Int      @id @default(autoincrement())    // Khóa chính, tự động tăng
-    userId     Int      @unique                          // Mỗi người dùng có một subscription duy nhất
+    id         String   @id @default(uuid())             // Khóa chính
+    userId     String      @unique                          // Mỗi người dùng có một subscription duy nhất
     plan       SubscriptionPlan                          // Gói đăng ký của người dùng (Free, Basic, Pro,ENTERPRISE)
     expiresAt  DateTime                                  // Thời gian hết hạn của đăng ký
     price      Float                                     // Giá gói đăng ký
-    createdAt  DateTime @default(now())                   // Thời gian người dùng đăng ký
+    createdAt  DateTime @default(now())                  // Thời gian người dùng đăng ký
     
     // Quan hệ với User: Mỗi Subscription thuộc về một User cụ thể
     user       User     @relation(fields: [userId], references: [id])
@@ -171,10 +172,10 @@ model Subscription {
 
 // ORDER & PAYMENT
 model Order {
-    id         Int      @id @default(autoincrement())     // Khóa chính, tự động tăng
-    userId     Int                                        // Mã người dùng (User) đã tạo đơn hàng
-    totalAmount Float                                     // Tổng tiền của đơn hàng
-    createdAt  DateTime @default(now())                   // Thời gian tạo đơn hàng
+    id            String   @id @default(uuid())               // Khóa chính
+    userId        String                                        // Mã người dùng (User) đã tạo đơn hàng
+    totalAmount   Float                                     // Tổng tiền của đơn hàng
+    createdAt     DateTime @default(now())                   // Thời gian tạo đơn hàng
     
     // Quan hệ với User: Mỗi đơn hàng thuộc về một người dùng
     user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -184,8 +185,8 @@ model Order {
 }
 
 model Payment {
-    id         Int      @id @default(autoincrement())         // Khóa chính, tự động tăng
-    orderId    Int      @unique                               // Mã đơn hàng (Order) mà thanh toán này thuộc về
+    id         String   @id @default(uuid())                  // Khóa chính
+    orderId    String      @unique                               // Mã đơn hàng (Order) mà thanh toán này thuộc về
     amount     Float                                          // Số tiền thanh toán
     method     String                                         // Phương thức thanh toán (ví dụ: thẻ tín dụng, PayPal, chuyển khoản)
     status     PaymentStatus @default(PENDING)                // Trạng thái thanh toán (Chờ xử lý, Đã thanh toán, Hủy)
@@ -197,11 +198,11 @@ model Payment {
 
 // PROJECTS & TASKS
 model Project {
-    id         Int      @id @default(autoincrement())      // Khóa chính, tự động tăng
-    groupId    Int                                         // Mã nhóm (GroupDev) mà dự án thuộc về
-    name       String                                      // Tên dự án
-    description String?                                    // Mô tả dự án
-    createdAt  DateTime @default(now())                    // Thời gian tạo dự án
+    id           String   @id @default(uuid())                // Khóa chính
+    groupId      String                                         // Mã nhóm (GroupDev) mà dự án thuộc về
+    name         String                                      // Tên dự án
+    description  String?                                    // Mô tả dự án
+    createdAt    DateTime @default(now())                    // Thời gian tạo dự án
     
     // Quan hệ với GroupDev: Mỗi dự án thuộc về một nhóm phát triển (GroupDev)
     group      GroupDev @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -217,14 +218,14 @@ model Project {
 }
 
 model Task {
-    id         Int      @id @default(autoincrement())     // Khóa chính, tự động tăng
-    projectId  Int                                        // Mã dự án (Project) mà nhiệm vụ này thuộc về
-    assignedTo Int?                                       // Mã người dùng (User) được giao nhiệm vụ (optional)                            
-    title      String                                     // Tiêu đề nhiệm vụ
-    description String?                                   // Mô tả nhiệm vụ
-    status     TaskStatus @default(PENDING)               // Trạng thái nhiệm vụ (Chờ xử lý, Đang làm, Hoàn thành)
-    dueDate    DateTime?                                  // Hạn hoàn thành nhiệm vụ
-    createdAt  DateTime @default(now())                   // Thời gian tạo nhiệm vụ
+    id           String   @id @default(uuid())              // Khóa chính
+    projectId    String                                     // Mã dự án (Project) mà nhiệm vụ này thuộc về
+    assignedTo   String?                                    // Mã người dùng (User) được giao nhiệm vụ (optional)                            
+    title        String                                     // Tiêu đề nhiệm vụ
+    description  String?                                   // Mô tả nhiệm vụ
+    status       TaskStatus @default(PENDING)               // Trạng thái nhiệm vụ (Chờ xử lý, Đang làm, Hoàn thành)
+    dueDate      DateTime?                                  // Hạn hoàn thành nhiệm vụ
+    createdAt    DateTime @default(now())                   // Thời gian tạo nhiệm vụ
    
     // Quan hệ với Project: Mỗi nhiệm vụ thuộc về một dự án
     project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -235,12 +236,12 @@ model Task {
 
 // CHAT SYSTEM
 model Message {
-    id        Int @id @default(autoincrement())   // Khóa chính, tự động tăng
-    senderId  Int                                 // Mã người dùng (User) gửi tin nhắn
-    receiverId Int?                               // Mã người dùng (User) nhận tin nhắn (nếu có)
-    groupId   Int?                                // Mã nhóm (GroupDev) mà tin nhắn này thuộc về (nếu có)
-    content   String                              // Nội dung tin nhắn
-    createdAt DateTime @default(now())           // Thời gian gửi tin nhắn
+    id         String   @id @default(uuid())       // Khóa chính
+    senderId   String                                 // Mã người dùng (User) gửi tin nhắn
+    receiverId String?                               // Mã người dùng (User) nhận tin nhắn (nếu có)
+    groupId    String?                                // Mã nhóm (GroupDev) mà tin nhắn này thuộc về (nếu có)
+    content    String                              // Nội dung tin nhắn
+    createdAt DateTime @default(now())            // Thời gian gửi tin nhắn
    
    // Quan hệ với User (sender): Người gửi tin nhắn
     sender    User     @relation(fields: [senderId], references: [id], name: "UserMessages", onDelete: Cascade)
@@ -254,8 +255,8 @@ model Message {
 
 // NOTIFICATIONS
 model Notification {
-    id        Int @id @default(autoincrement())    // Khóa chính, tự động tăng
-    userId    Int                                  // Mã người dùng (User) nhận thông báo
+    id        String   @id @default(uuid())        // Khóa chính
+    userId    String                                  // Mã người dùng (User) nhận thông báo
     message   String                               // Nội dung thông báo
     read      Boolean @default(false)              // Trạng thái đã đọc hay chưa
     createdAt DateTime @default(now())             // Thời gian tạo thông báo
@@ -266,11 +267,11 @@ model Notification {
 
 // FILE MANAGEMENT
 model File {
-    id         Int @id @default(autoincrement())         // Khóa chính, tự động tăng
-    projectId  Int                                       // Mã dự án (Project) mà tệp này thuộc về
+    id        String   @id @default(uuid())              // Khóa chính
+    projectId  String                                       // Mã dự án (Project) mà tệp này thuộc về
     filename   String                                    // Tên tệp
     fileType   String                                    // Loại tệp (ví dụ: "image/png", "application/pdf")
-    size       Int                                       // Kích thước tệp (bytes)
+    size       String                                       // Kích thước tệp (bytes)
     url        String                                    // Đường dẫn tới tệp
     uploadedAt DateTime @default(now())                  // Thời gian tải tệp lên
    
@@ -280,9 +281,9 @@ model File {
 
 // PROJECT REVIEWS
 model Review { 
-    id        Int @id @default(autoincrement())   // Khóa chính, tự động tăng
-    projectId Int                                 // Mã dự án (Project) mà đánh giá này thuộc về
-    userId    Int                                 // Mã người dùng (User) đã thực hiện đánh giá
+    id        String   @id @default(uuid())       // Khóa chính
+    projectId String                              // Mã dự án (Project) mà đánh giá này thuộc về
+    userId    String                              // Mã người dùng (User) đã thực hiện đánh giá
     rating    Int                                 // Điểm đánh giá (1-5)
     comment   String?                             // Bình luận đánh giá
     createdAt DateTime @default(now())            // Thời gian tạo đánh giá

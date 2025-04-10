@@ -13,9 +13,10 @@ import { AppService } from './app.service';
 import { WinstonModule } from 'nest-winston';
 import { winstonLoggerConfig } from './configs/winston-logger.config';
 import { LoggerService } from '@/services/logger.service';
-import { LoggingMiddleware } from '@/Middlewares/LoggingMiddleware';
+import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware';
 import { LoggingInterceptor } from '@/common/interceptors/Logging.interceptor';
 import { CoreModule } from './modules/core/core.module';
+import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -49,6 +50,10 @@ import { CoreModule } from './modules/core/core.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // rate limiting global
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // project api point global
     },
     {
       provide: APP_INTERCEPTOR,

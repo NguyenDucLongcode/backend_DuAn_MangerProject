@@ -2,9 +2,9 @@ import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class CreateAuthDto {
   // validUsername
-  @IsNotEmpty({ message: 'Username không được để trống' })
+  @IsNotEmpty({ message: 'Email không được để trống' })
   @IsEmail({}, { message: 'Email không hợp lệ' })
-  username!: string;
+  email!: string;
 
   // validPassword
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })

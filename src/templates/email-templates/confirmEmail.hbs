@@ -1,0 +1,55 @@
+<html>
+  <head>
+    <meta charset='UTF-8' />
+    <title>Xác nhận email</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+      .container {
+        background-color: #ffffff;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #333333;
+      }
+      p {
+        color: #666666;
+        line-height: 1.5;
+      }
+      .button {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 24px;
+        background-color: #007bff;
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #999999;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <h2>Xin chào {{email}},</h2>
+      <p>Cảm ơn bạn đã đăng ký. Vui lòng nhấn vào nút bên dưới để xác nhận địa
+        chỉ email của bạn:</p>
+      <a class='button' href='{{confirmLink}}'>Xác nhận Email</a>
+      <p><em>Lưu ý: Liên kết xác nhận chỉ có hiệu lực trong
+          {{expiresIn}}.</em></p>
+      <p class='footer'>Nếu bạn không yêu cầu email này, vui lòng bỏ qua.</p>
+    </div>
+  </body>
+</html>

@@ -28,7 +28,7 @@ export class UsersController {
 
   @Get()
   findOne(@Query('id') id: string, @Req() req: Request) {
-    return this.usersService.findOne(+id, req);
+    return this.usersService.findOne(id, req);
   }
 
   @Patch('update')
@@ -37,11 +37,11 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() req: Request,
   ) {
-    return this.usersService.update(+id, updateUserDto, req);
+    return this.usersService.update(id, updateUserDto, req);
   }
 
   @Delete('delete')
   remove(@Query('id') id: string, @Req() req: Request) {
-    return this.usersService.remove(+id, req);
+    return this.usersService.remove(id, req);
   }
 }
