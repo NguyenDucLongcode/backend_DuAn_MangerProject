@@ -1,33 +1,45 @@
 // system
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
 import { PrismaModule } from './prisma/prisma.module'; // primas module
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'; // rate limiting
-import { CacheConfigModule } from '@/common/cache/cache.module'; // cache
+
+// logger
+import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware';
+
+import { CoreModule } from './modules/core/core.module';
+import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-// logger
-import { WinstonModule } from 'nest-winston';
-import { winstonLoggerConfig } from './configs/winston-logger.config';
-import { LoggerService } from '@/services/logger.service';
-import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware';
-import { LoggingInterceptor } from '@/common/interceptors/Logging.interceptor';
-import { CoreModule } from './modules/core/core.module';
-import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
+// catche
+import { CacheModule } from '@nestjs/cache-manager';
+
+import { createKeyv } from '@keyv/redis';
+import { Keyv } from 'keyv';
+import { CacheableMemory } from 'cacheable';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // use  ConfigModule global  everywhere in application
-      envFilePath: `.env.${process.env.NODE_ENV}`, // Lựa chọn file .env theo NODE_ENV
+      isGlobal: true, // use ConfigModule global  everywhere in application
+      envFilePath: `.env.${process.env.NODE_ENV}`, // Choose file .env follow NODE_ENV
     }),
 
-    CacheConfigModule, // config Redis
-
-    WinstonModule.forRoot(winstonLoggerConfig), // Config Winston Logger
+    CacheModule.registerAsync({
+      useFactory: () => {
+        return {
+          stores: [
+            new Keyv({
+              store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
+            }),
+            createKeyv(process.env.REDIS_URL || 'redis://localhost:6379'),
+          ],
+        };
+      },
+    }),
 
     // Config ThrottlerModule for rate limiting
     ThrottlerModule.forRoot({
@@ -38,6 +50,7 @@ import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
         },
       ],
     }),
+
     PrismaModule, // Prisma
     CoreModule, // total module
   ],
@@ -45,7 +58,6 @@ import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
   controllers: [AppController],
 
   providers: [
-    LoggerService, // Đăng ký LoggerService để sử dụng trong toàn bộ ứng dụng
     AppService,
     {
       provide: APP_GUARD,
@@ -55,16 +67,10 @@ import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // project api point global
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
-    },
   ],
-
-  exports: [LoggerService], // Export LoggerService nếu cần sử dụng ở module khác
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggingMiddleware).forRoutes('*'); // Đăng ký middleware logging
+    consumer.apply(LoggingMiddleware).forRoutes('*'); // register middleware logging
   }
 }

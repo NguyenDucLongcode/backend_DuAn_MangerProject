@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { LoggerService } from '@/services/logger.service'; // logger winston
+import { Logger } from '@nestjs/common';
 import { validationPipeConfig } from './configs/validation.pipe.config'; // config ValidationPipe data request
 import { PrismaExceptionFilter } from '@/prisma/prisma-exception/prisma-exception.filter'; // add global Primas exception
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug'],
+  });
 
   app.useGlobalFilters(new PrismaExceptionFilter()); //global Primas exception
 
@@ -20,11 +22,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
 
-  // config logger winston
-  const logger = app.get(LoggerService);
-  logger.log(`Server is running on http://localhost:${port}`); // write log when server starts up
-
   await app.listen(port);
+
+  const logger = new Logger('Bootstrap');
+  logger.log(`Server started at http://localhost:${port}`);
 }
 
 bootstrap().catch((error) => {
