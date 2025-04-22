@@ -6,20 +6,17 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module'; // primas module
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'; // rate limiting
 
-// logger
-import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware';
+import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware'; // logger
 
-import { CoreModule } from './modules/core/core.module';
-import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard';
+import { CoreModule } from './modules/core/core.module'; // total module
+import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard'; // jwtAuthGuard
+
+// api homepage /
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 // catche
-import { CacheModule } from '@nestjs/cache-manager';
-
-import { createKeyv } from '@keyv/redis';
-import { Keyv } from 'keyv';
-import { CacheableMemory } from 'cacheable';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -28,18 +25,7 @@ import { CacheableMemory } from 'cacheable';
       envFilePath: `.env.${process.env.NODE_ENV}`, // Choose file .env follow NODE_ENV
     }),
 
-    CacheModule.registerAsync({
-      useFactory: () => {
-        return {
-          stores: [
-            new Keyv({
-              store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
-            }),
-            createKeyv(process.env.REDIS_URL || 'redis://localhost:6379'),
-          ],
-        };
-      },
-    }),
+    RedisModule,
 
     // Config ThrottlerModule for rate limiting
     ThrottlerModule.forRoot({

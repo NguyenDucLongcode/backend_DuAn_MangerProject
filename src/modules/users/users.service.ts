@@ -11,9 +11,21 @@ import { CreateUserDto, PaginationDto, UpdateUserDto } from './dto'; // dto
 // common utils
 import { removePassword, hashPasswordHelper } from '@/common/utils/user.utils';
 
+import { RedisService } from '@/redis/redis.service'; // cache
+
+// schemas
+import {
+  UserPaginationCache,
+  UserPaginationCacheSchema,
+} from '@/common/schemas/user-pagination-cache.schema';
+
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   // Fuc create user
   async create(createUserDto: CreateUserDto, req: Request) {
@@ -45,6 +57,9 @@ export class UsersService {
       },
     });
 
+    //delete key
+    await this.redisService.delByPattern('users:pagination:page=1&limit=*');
+
     // Return seccessfull result
     return {
       statusCode: HttpStatus.CREATED,
@@ -61,10 +76,28 @@ export class UsersService {
     const skip = (page - 1) * limit;
     const take = limit;
 
+    const cacheKey = `users:pagination:page=${page}&limit=${limit}`;
+    const cachedString = await this.redisService.get(cacheKey);
+
+    // return result when key is in redis
+    if (cachedString) {
+      // data type casting when converting json
+      const cached: UserPaginationCache = UserPaginationCacheSchema.parse(
+        JSON.parse(cachedString),
+      );
+      return {
+        ...cached,
+        cache: true,
+      };
+    }
+
     // remove password from user
     const users = await this.prisma.user.findMany({
       skip,
       take,
+      orderBy: {
+        createdAt: 'desc',
+      },
       select: {
         id: true,
         name: true,
@@ -81,7 +114,7 @@ export class UsersService {
     const totalCount = await this.prisma.user.count();
 
     // Return seccessfull result
-    return {
+    const result = {
       statusCode: HttpStatus.OK,
       message: 'Get Pagination successfully',
       data: {
@@ -93,6 +126,10 @@ export class UsersService {
       timestamp: new Date().toISOString(),
       path: req.originalUrl,
     };
+
+    await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
+
+    return result;
   }
 
   // find user by id
@@ -130,6 +167,9 @@ export class UsersService {
       data: updateUserDto,
     });
 
+    // delete all 'users:pagination:*' keys cache
+    await this.redisService.delByPattern('users:pagination:*');
+
     // Return seccessfull result
     return {
       statusCode: HttpStatus.OK,
@@ -150,11 +190,14 @@ export class UsersService {
     // delete user
     await this.prisma.user.delete({ where: { id } });
 
+    // delete all 'users:pagination:*' keys cache
+    await this.redisService.delByPattern('users:pagination:*');
+
     // Return seccessfull result
     return {
       statusCode: HttpStatus.OK,
       message: 'Delete user successfully',
-      data: null,
+      data: removePassword(user),
       timestamp: new Date().toISOString(),
       path: req.originalUrl,
     };
