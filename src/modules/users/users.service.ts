@@ -17,7 +17,11 @@ import { RedisService } from '@/redis/redis.service'; // cache
 import {
   UserPaginationCache,
   UserPaginationCacheSchema,
-} from '@/common/schemas/user-pagination-cache.schema';
+} from '@/common/schemas/user/user-pagination-cache.schema';
+import {
+  UserIDCache,
+  UserIDCacheSchema,
+} from '@/common/schemas/user/user-findOne-cache.schema';
 
 @Injectable()
 export class UsersService {
@@ -106,6 +110,7 @@ export class UsersService {
         address: true,
         gender: true,
         role: true,
+        isActive: true,
         createdAt: true,
       },
     });
@@ -143,14 +148,33 @@ export class UsersService {
       throw new NotFoundException('User not found, please choose another id');
     }
 
-    // Return seccessfull result
-    return {
+    // cache
+    const cacheKey = `users:findOne:id=${id}`;
+    const cachedString = await this.redisService.get(cacheKey);
+
+    // return result when key is in redis
+    if (cachedString) {
+      // data type casting when converting json
+      const cached: UserIDCache = UserIDCacheSchema.parse(
+        JSON.parse(cachedString),
+      );
+      return {
+        ...cached,
+        cache: true,
+      };
+    }
+
+    const result = {
       statusCode: HttpStatus.OK,
       message: 'Get user by id successfully',
       data: removePassword(existingUser),
       timestamp: new Date().toISOString(),
       path: req.originalUrl,
     };
+
+    await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
+
+    return result;
   }
 
   // update user
@@ -169,6 +193,7 @@ export class UsersService {
 
     // delete all 'users:pagination:*' keys cache
     await this.redisService.delByPattern('users:pagination:*');
+    await this.redisService.del(`users:findOne:id=${id}`);
 
     // Return seccessfull result
     return {
@@ -192,6 +217,7 @@ export class UsersService {
 
     // delete all 'users:pagination:*' keys cache
     await this.redisService.delByPattern('users:pagination:*');
+    await this.redisService.del(`users:findOne:id=${id}`);
 
     // Return seccessfull result
     return {
@@ -205,5 +231,12 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email: email } });
+  }
+
+  async updatePassword(id: string, hashedPassword: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword },
+    });
   }
 }

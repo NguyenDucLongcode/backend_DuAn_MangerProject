@@ -8,6 +8,7 @@ export const UserPaginationItemSchema = z.object({
   address: z.string().nullable(),
   gender: z.string().nullable(),
   role: z.string(),
+  isActive: z.boolean(),
   createdAt: z.string(),
 });
 

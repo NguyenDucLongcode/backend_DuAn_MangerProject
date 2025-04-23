@@ -32,4 +32,24 @@ export class EmailService {
       context: { email, confirmLink, expiresIn: formatExpiresIn(expiresIn) },
     });
   }
+
+  // Send forgot password email with reset link
+  async sendForgotPasswordEmail(
+    to: string,
+    email: string,
+    resetLink: string,
+    expiresIn: string,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to,
+      subject: 'Reset your password',
+      template: 'forgotPassword',
+      context: {
+        email,
+        resetLink,
+        expiresIn: formatExpiresIn(expiresIn),
+        year: new Date().getFullYear(),
+      },
+    });
+  }
 }

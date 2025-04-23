@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
   HttpStatus,
   ConflictException,
+  UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@/prisma/prisma.service'; // primas
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 import { UsersService } from '../users/users.service';
 
@@ -20,7 +23,7 @@ import {
 import { TokenUtil } from './../../common/utils/token.utils';
 
 // type
-import { User } from './type/type';
+import { JwtDecodedPayload, User } from './type/type';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { EmailService } from '../email/email.service';
 
@@ -44,11 +47,75 @@ export class AuthService {
   }
 
   // Fuc Handler login User
-  login(user: User) {
+  async login(user: User, res: Response) {
+    const isProduction = process.env.NODE_ENV === 'production';
     const payload = { username: user.email, sub: user.id };
+
+    // Save refresh token to database
+    const refreshToken = this.tokenUtil.generateRefreshToken(payload);
+    await this.prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        token: refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    // Save refreshToken to cookie
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: isProduction, //  Chỉ bật secure khi production
+      sameSite: isProduction ? 'strict' : 'lax', // Tránh lỗi CORS trong dev
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+    });
+
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  // Fuc Logout
+  async logout(req: Request, res: Response) {
+    // Check refresh token
+    const cookies = req.cookies as { refresh_token?: string };
+    const refreshToken = cookies.refresh_token;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Missing refresh token');
+    }
+
+    try {
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      // Check if refresh token exists in database
+      const tokenRecord = await this.prisma.refreshToken.findUnique({
+        where: { token: refreshToken },
+      });
+
+      if (!tokenRecord) {
+        throw new UnauthorizedException('Refresh token not found');
+      }
+
+      // Mark the refresh token as revoked (instead of deleting it)
+      await this.prisma.refreshToken.update({
+        where: { token: refreshToken },
+        data: { revoked: true },
+      });
+
+      // Delete cookie JWT token
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+      });
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Logout successfully',
+      };
+    } catch (err) {
+      throw new InternalServerErrorException('Logout failed');
+    }
   }
 
   // Fuc Handler regisster User
@@ -76,7 +143,7 @@ export class AuthService {
     });
 
     // link verify Email
-    const confirmLink = `${process.env.CLIENT_URL}/api/v1/auth/email/verify?token=${emailVerificationToken}`;
+    const confirmLink = `${process.env.SERVER_URL}/api/v1/auth/email/verify?token=${emailVerificationToken}`;
 
     //Sent email authentication to user include:
     // 1. Receiver addres
@@ -100,6 +167,76 @@ export class AuthService {
     };
   }
 
+  // Fuc Handler refreshToken
+  async refreshToken(req: Request, res: Response) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    //get refreshToken token from client
+    const cookies = req.cookies as { refresh_token?: string };
+    const refreshToken = cookies.refresh_token;
+
+    // check refreshToken
+    if (!refreshToken) throw new UnauthorizedException('Missing refresh token');
+
+    try {
+      const payload = this.tokenUtil.decodeRefreshToken(
+        refreshToken,
+      ) as JwtDecodedPayload;
+      const { exp, iat, ...cleanPayload } = payload;
+
+      // Check if the refresh token exists in the database
+      const tokenRecord = await this.prisma.refreshToken.findUnique({
+        where: { token: refreshToken },
+      });
+
+      if (!tokenRecord) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      // Check if the refresh token has expired (using `expiresAt` from database)
+      const currentTime = new Date();
+      if (tokenRecord.expiresAt < currentTime) {
+        throw new UnauthorizedException('Refresh token expired');
+      }
+
+      // Check if userId matches
+      if (tokenRecord.userId !== payload.sub) {
+        throw new UnauthorizedException('Token does not match the user');
+      }
+
+      // create a new access token
+      const newAccessToken = this.tokenUtil.generateNewToken(cleanPayload);
+
+      // Extend refresh token
+      const newRefreshToken = this.tokenUtil.generateRefreshToken(cleanPayload);
+      res.cookie('refresh_token', newRefreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      // Mark the old refresh token as revoked (not delete)
+      await this.prisma.refreshToken.update({
+        where: { token: refreshToken },
+        data: { revoked: true },
+      });
+
+      // Save the new refresh token to the database with updated expiration date
+      await this.prisma.refreshToken.create({
+        data: {
+          userId: tokenRecord.userId,
+          token: newRefreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      return { access_token: newAccessToken };
+    } catch (err) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+  }
+
   // Fuc resent email authentication to user not confirm email
   async resendConfirmationEmail(email: string, req: Request) {
     // Check if user exists
@@ -118,7 +255,7 @@ export class AuthService {
       this.tokenUtil.generateEmailVerificationToken(email);
 
     // link verify Email
-    const confirmLink = `${process.env.CLIENT_URL}/api/v1/auth/email/verify?token=${emailVerificationToken}`;
+    const confirmLink = `${process.env.SERVER_URL}/api/v1/auth/email/verify?token=${emailVerificationToken}`;
 
     //Sent email authentication to user include:
     // 1. Receiver addres
@@ -172,6 +309,66 @@ export class AuthService {
       };
     } catch (err) {
       console.log(err);
+      throw new BadRequestException('Invalid or expired token');
+    }
+  }
+
+  // forgotPassword
+
+  // Step 1: Generate reset token and send email
+  async forgotPassword(email: string, req: Request) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) throw new NotFoundException('Email not found');
+
+    // Create a reset token with short expiry
+    const payload = { sub: user.id };
+    const token = this.tokenUtil.generateForgotPasswordToken(payload);
+
+    // Send password reset link via email
+    const resetLink = `${process.env.SERVER_URL}/api/v1/auth/reset-password?token=${token}`;
+
+    //Sent email authentication to user include:
+    // 1. Receiver addres
+    // 2. Receiver name (can set update)
+    // 3. Link confirm email
+    // 4. Expiration time
+    await this.emailService.sendForgotPasswordEmail(
+      user.email,
+      user.email,
+      resetLink,
+      this.tokenUtil.tokenForgotPasswordExpiresIn(),
+    );
+
+    //Return seccessfull result
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Forgot password email sent successfully',
+      data: null,
+      timestamp: new Date().toISOString(),
+      path: req.originalUrl,
+    };
+  }
+
+  // Step 2: Validate token and reset the password
+  async resetPassword(token: string, newPassword: string, req: Request) {
+    try {
+      // Verify token and extract user ID
+      const decoded = this.tokenUtil.decodeForgotPasswordToken(token);
+      const userId = decoded.sub;
+
+      // Hash new password and update user
+      const hashedPassword = await hashPasswordHelper(newPassword);
+      await this.usersService.updatePassword(userId, hashedPassword);
+
+      //Return seccessfull result
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'Password has been successfully reset',
+        data: null,
+        timestamp: new Date().toISOString(),
+        path: req.originalUrl,
+      };
+    } catch (e) {
       throw new BadRequestException('Invalid or expired token');
     }
   }

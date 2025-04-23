@@ -8,6 +8,10 @@ import {
   Matches,
 } from 'class-validator';
 import { UserRoleEnum } from '@prisma/client'; // Import UserRoleEnum từ Prisma
+import {
+  PASSWORD_STRENGTH_MESSAGE,
+  PasswordStrengthRegex,
+} from '@/common/constants';
 
 export class CreateUserDto {
   // validEmail
@@ -21,13 +25,9 @@ export class CreateUserDto {
   // validPassword
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
   @IsString({ message: 'Mật khẩu phải là một chuỗi' })
-  @Matches(
-    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-    {
-      message:
-        'Mật khẩu phải có ít nhất 8 ký tự, một chữ hoa, một chữ thường, một số và một ký tự đặc biệt',
-    },
-  )
+  @Matches(PasswordStrengthRegex, {
+    message: PASSWORD_STRENGTH_MESSAGE,
+  })
   password!: string;
 
   // validPhone

@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { validationPipeConfig } from './configs/validation.pipe.config'; // config ValidationPipe data request
 import { PrismaExceptionFilter } from '@/prisma/prisma-exception/prisma-exception.filter'; // add global Primas exception
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -18,9 +19,15 @@ async function bootstrap() {
 
   app.useGlobalPipes(validationPipeConfig); // config ValidationPipe data request
 
-  app.enableCors(); // config CORS
+  // config CORS
+  app.enableCors({
+    origin: process.env.CLIENT_URL, // Frontend URL
+    credentials: true, // send attached cookies
+  });
 
-  const port = process.env.PORT || 3000;
+  app.use(cookieParser()); // config cookie
+
+  const port = process.env.PORT || 8080;
 
   await app.listen(port);
 

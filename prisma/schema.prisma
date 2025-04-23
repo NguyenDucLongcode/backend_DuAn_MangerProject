@@ -92,9 +92,12 @@ model User {
 
 model RefreshToken {
     id             String   @id @default(uuid())                // Khóa chính, tự động tăng
-    userId         String    @unique                            // Mỗi user chỉ có một refresh token duy nhất
-    token          String                                       // Giá trị của refresh token
+    userId         String                                       // Hỗ trợ được nhiwwuf thiết bị
+    token          String    @unique                            // Giá trị của refresh token duy  nhất
     expiresAt      DateTime                                     // Thời gian token hết hạn
+    revoked   Boolean  @default(false)                          // RefreshToken bị hủy
+    createdAt      DateTime @default(now())                   
+                        
    
    // Quan hệ với User: Mỗi RefreshToken thuộc về một User cụ thể
    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)

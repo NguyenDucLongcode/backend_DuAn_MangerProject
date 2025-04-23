@@ -1,0 +1,23 @@
+import { z } from 'zod';
+
+export const UserIDItemSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  address: z.string().nullable(),
+  gender: z.string().nullable(),
+  role: z.string(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+});
+
+export const UserIDCacheSchema = z.object({
+  statusCode: z.number(),
+  message: z.string(),
+  data: UserIDItemSchema,
+  timestamp: z.string(),
+  path: z.string(),
+});
+
+export type UserIDCache = z.infer<typeof UserIDCacheSchema>;

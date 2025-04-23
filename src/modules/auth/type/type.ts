@@ -20,3 +20,15 @@ export interface JwtPayload {
   sub: string;
   username: string;
 }
+
+export interface CustomJwtPayload {
+  sub: string;
+  username: string;
+  iat?: number;
+  exp?: number;
+}
+
+export interface JwtDecodedPayload extends CustomJwtPayload {
+  iat: number;
+  exp: number;
+}

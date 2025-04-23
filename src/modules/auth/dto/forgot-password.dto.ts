@@ -4,17 +4,17 @@ import {
   PasswordStrengthRegex,
 } from '@/common/constants';
 
-export class CreateAuthDto {
-  // validUsername
+export class ForgotPasswordDto {
   @IsNotEmpty({ message: 'Email không được để trống' })
   @IsEmail({}, { message: 'Email không hợp lệ' })
   email!: string;
+}
 
-  // validPassword
+export class ResetPasswordDto {
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
   @IsString({ message: 'Mật khẩu phải là một chuỗi' })
   @Matches(PasswordStrengthRegex, {
     message: PASSWORD_STRENGTH_MESSAGE,
   })
-  password!: string;
+  newPassword!: string;
 }

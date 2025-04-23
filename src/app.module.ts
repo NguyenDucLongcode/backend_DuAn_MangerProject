@@ -5,9 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { PrismaModule } from './prisma/prisma.module'; // primas module
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'; // rate limiting
-
 import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware'; // logger
-
 import { CoreModule } from './modules/core/core.module'; // total module
 import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard'; // jwtAuthGuard
 
@@ -15,8 +13,8 @@ import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard'; // jwtAut
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-// catche
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './redis/redis.module'; // catche
+import { CronJobsModule } from './services/cron_Jobs/CronJobs.module'; // cron job
 
 @Module({
   imports: [
@@ -25,7 +23,10 @@ import { RedisModule } from './redis/redis.module';
       envFilePath: `.env.${process.env.NODE_ENV}`, // Choose file .env follow NODE_ENV
     }),
 
-    RedisModule,
+    RedisModule, // catche
+
+    // cron job
+    CronJobsModule,
 
     // Config ThrottlerModule for rate limiting
     ThrottlerModule.forRoot({
