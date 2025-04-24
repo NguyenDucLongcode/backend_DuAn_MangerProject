@@ -1,10 +1,8 @@
 import {
   Injectable,
-  HttpStatus,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { Request } from 'express';
 
 import { PrismaService } from '@/prisma/prisma.service'; // primas
 import { CreateUserDto, PaginationDto, UpdateUserDto } from './dto'; // dto
@@ -32,7 +30,7 @@ export class UsersService {
   ) {}
 
   // Fuc create user
-  async create(createUserDto: CreateUserDto, req: Request) {
+  async create(createUserDto: CreateUserDto) {
     // Check if email or phone exists in database. If so, throw an error.
     const existingUser = await this.prisma.user.findFirst({
       where: {
@@ -66,16 +64,13 @@ export class UsersService {
 
     // Return seccessfull result
     return {
-      statusCode: HttpStatus.CREATED,
       message: 'Create a new user successfully',
-      data: removePassword(createUser),
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
+      user: removePassword(createUser),
     };
   }
 
   // pagination user
-  async Pagination(paginationDto: PaginationDto, req: Request) {
+  async Pagination(paginationDto: PaginationDto) {
     const { page, limit } = paginationDto;
     const skip = (page - 1) * limit;
     const take = limit;
@@ -91,7 +86,6 @@ export class UsersService {
       );
       return {
         ...cached,
-        cache: true,
       };
     }
 
@@ -120,16 +114,11 @@ export class UsersService {
 
     // Return seccessfull result
     const result = {
-      statusCode: HttpStatus.OK,
       message: 'Get Pagination successfully',
-      data: {
-        dataUser: users,
-        total: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        currentPage: page,
-      },
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
+      users: users,
+      total: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
     };
 
     await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
@@ -138,7 +127,7 @@ export class UsersService {
   }
 
   // find user by id
-  async findOne(id: string, req: Request) {
+  async findOne(id: string) {
     // check user exists by id
     const existingUser = await this.prisma.user.findUnique({
       where: { id },
@@ -160,16 +149,12 @@ export class UsersService {
       );
       return {
         ...cached,
-        cache: true,
       };
     }
 
     const result = {
-      statusCode: HttpStatus.OK,
       message: 'Get user by id successfully',
-      data: removePassword(existingUser),
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
+      user: removePassword(existingUser),
     };
 
     await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
@@ -178,7 +163,7 @@ export class UsersService {
   }
 
   // update user
-  async update(id: string, updateUserDto: UpdateUserDto, req: Request) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     // check user exists by id
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
@@ -197,15 +182,12 @@ export class UsersService {
 
     // Return seccessfull result
     return {
-      statusCode: HttpStatus.OK,
       message: 'update user successfully',
-      data: removePassword(updatedUser),
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
+      user: removePassword(updatedUser),
     };
   }
 
-  async remove(id: string, req: Request) {
+  async remove(id: string) {
     // check user exists
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
@@ -221,11 +203,8 @@ export class UsersService {
 
     // Return seccessfull result
     return {
-      statusCode: HttpStatus.OK,
       message: 'Delete user successfully',
-      data: removePassword(user),
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
+      user: removePassword(user),
     };
   }
 

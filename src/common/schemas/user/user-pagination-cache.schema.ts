@@ -12,19 +12,12 @@ export const UserPaginationItemSchema = z.object({
   createdAt: z.string(),
 });
 
-export const UserPaginationDataSchema = z.object({
-  dataUser: z.array(UserPaginationItemSchema),
+export const UserPaginationCacheSchema = z.object({
+  message: z.string(),
+  users: z.array(UserPaginationItemSchema), // Lưu danh sách users trực tiếp
   total: z.number(),
   totalPages: z.number(),
   currentPage: z.number(),
-});
-
-export const UserPaginationCacheSchema = z.object({
-  statusCode: z.number(),
-  message: z.string(),
-  data: UserPaginationDataSchema,
-  timestamp: z.string(),
-  path: z.string(),
 });
 
 export type UserPaginationCache = z.infer<typeof UserPaginationCacheSchema>;

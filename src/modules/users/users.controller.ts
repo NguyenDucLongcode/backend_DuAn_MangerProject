@@ -6,42 +6,36 @@ import {
   Patch,
   Delete,
   Query,
-  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, PaginationDto, UpdateUserDto } from './dto';
-import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('create')
-  create(@Body() createUserDto: CreateUserDto, @Req() req: Request) {
-    return this.usersService.create(createUserDto, req);
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
   }
 
   @Get('pagination')
-  Pagination(@Query() paginationDto: PaginationDto, @Req() req: Request) {
-    return this.usersService.Pagination(paginationDto, req);
+  Pagination(@Query() paginationDto: PaginationDto) {
+    return this.usersService.Pagination(paginationDto);
   }
 
   @Get()
-  findOne(@Query('id') id: string, @Req() req: Request) {
-    return this.usersService.findOne(id, req);
+  findOne(@Query('id') id: string) {
+    return this.usersService.findOne(id);
   }
 
   @Patch('update')
-  update(
-    @Query('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @Req() req: Request,
-  ) {
-    return this.usersService.update(id, updateUserDto, req);
+  update(@Query('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete('delete')
-  remove(@Query('id') id: string, @Req() req: Request) {
-    return this.usersService.remove(id, req);
+  remove(@Query('id') id: string) {
+    return this.usersService.remove(id);
   }
 }

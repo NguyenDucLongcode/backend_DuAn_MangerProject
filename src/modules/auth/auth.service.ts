@@ -110,7 +110,6 @@ export class AuthService {
       });
 
       return {
-        statusCode: HttpStatus.OK,
         message: 'Logout successfully',
       };
     } catch (err) {
@@ -119,7 +118,7 @@ export class AuthService {
   }
 
   // Fuc Handler regisster User
-  async registerUser(createAuthDto: CreateAuthDto, req: Request) {
+  async registerUser(createAuthDto: CreateAuthDto) {
     const { email, password } = createAuthDto;
 
     // token to verify that the email really exists
@@ -159,11 +158,8 @@ export class AuthService {
 
     //Return seccessfull result
     return {
-      statusCode: HttpStatus.CREATED,
       message: 'Create a new user successfully',
-      data: removePassword(newUse),
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
+      user: removePassword(newUse),
     };
   }
 
@@ -186,11 +182,17 @@ export class AuthService {
 
       // Check if the refresh token exists in the database
       const tokenRecord = await this.prisma.refreshToken.findUnique({
-        where: { token: refreshToken },
+        where: {
+          token: refreshToken,
+          revoked: false,
+          expiresAt: { gt: new Date() },
+        },
       });
 
       if (!tokenRecord) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException(
+          'Refresh token not found or already revoked',
+        );
       }
 
       // Check if the refresh token has expired (using `expiresAt` from database)
@@ -238,7 +240,7 @@ export class AuthService {
   }
 
   // Fuc resent email authentication to user not confirm email
-  async resendConfirmationEmail(email: string, req: Request) {
+  async resendConfirmationEmail(email: string) {
     // Check if user exists
     const user = await this.usersService.findByEmail(email);
     if (!user) {
@@ -271,16 +273,12 @@ export class AuthService {
 
     //Return seccessfull result
     return {
-      statusCode: HttpStatus.CREATED,
       message: 'Confirmation email resent successfully',
-      data: null,
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
     };
   }
 
   // Fuc email authentication by token sent from email
-  async confirmEmailVerification(token: string, req: Request) {
+  async confirmEmailVerification(token: string) {
     try {
       // Decoded token verify email
       const decoded = this.tokenUtil.decodeEmailVerificationToken(token);
@@ -301,11 +299,7 @@ export class AuthService {
 
       // Return seccessfull result
       return {
-        statusCode: HttpStatus.CREATED,
         message: 'Confirmation email resent successfully',
-        data: null,
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl,
       };
     } catch (err) {
       console.log(err);
@@ -316,7 +310,7 @@ export class AuthService {
   // forgotPassword
 
   // Step 1: Generate reset token and send email
-  async forgotPassword(email: string, req: Request) {
+  async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new NotFoundException('Email not found');
 
@@ -341,16 +335,12 @@ export class AuthService {
 
     //Return seccessfull result
     return {
-      statusCode: HttpStatus.CREATED,
       message: 'Forgot password email sent successfully',
-      data: null,
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl,
     };
   }
 
   // Step 2: Validate token and reset the password
-  async resetPassword(token: string, newPassword: string, req: Request) {
+  async resetPassword(token: string, newPassword: string) {
     try {
       // Verify token and extract user ID
       const decoded = this.tokenUtil.decodeForgotPasswordToken(token);
@@ -362,11 +352,7 @@ export class AuthService {
 
       //Return seccessfull result
       return {
-        statusCode: HttpStatus.CREATED,
         message: 'Password has been successfully reset',
-        data: null,
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl,
       };
     } catch (e) {
       throw new BadRequestException('Invalid or expired token');

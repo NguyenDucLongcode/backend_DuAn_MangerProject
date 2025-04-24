@@ -13,11 +13,8 @@ export const UserIDItemSchema = z.object({
 });
 
 export const UserIDCacheSchema = z.object({
-  statusCode: z.number(),
   message: z.string(),
-  data: UserIDItemSchema,
-  timestamp: z.string(),
-  path: z.string(),
+  user: UserIDItemSchema,
 });
 
 export type UserIDCache = z.infer<typeof UserIDCacheSchema>;

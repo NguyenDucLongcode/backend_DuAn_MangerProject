@@ -2,15 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { validationPipeConfig } from './configs/validation.pipe.config'; // config ValidationPipe data request
-import { PrismaExceptionFilter } from '@/prisma/prisma-exception/prisma-exception.filter'; // add global Primas exception
+
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug'],
   });
-
-  app.useGlobalFilters(new PrismaExceptionFilter()); //global Primas exception
 
   // add prefix minus "\"
   app.setGlobalPrefix('api/v1', {

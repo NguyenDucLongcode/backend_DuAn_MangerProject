@@ -1,6 +1,6 @@
 // system
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
 import { PrismaModule } from './prisma/prisma.module'; // primas module
@@ -15,6 +15,8 @@ import { AppService } from './app.service';
 
 import { RedisModule } from './redis/redis.module'; // catche
 import { CronJobsModule } from './services/cron_Jobs/CronJobs.module'; // cron job
+import { AllExceptionsFilter } from './common/http-exception/catch-everything.filter';
+import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 
 @Module({
   imports: [
@@ -53,6 +55,14 @@ import { CronJobsModule } from './services/cron_Jobs/CronJobs.module'; // cron j
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // project api point global
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformResponseInterceptor,
     },
   ],
 })

@@ -42,8 +42,8 @@ export class AuthController {
 
   @Get('register')
   @Public()
-  handlerRegister(@Body() createAuthDto: CreateAuthDto, @Req() req: Request) {
-    return this.authService.registerUser(createAuthDto, req);
+  handlerRegister(@Body() createAuthDto: CreateAuthDto) {
+    return this.authService.registerUser(createAuthDto);
   }
 
   @Post('refresh-token')
@@ -57,32 +57,25 @@ export class AuthController {
 
   @Post('resend-confirmation')
   @Public()
-  async resendEmail(@Body('email') email: string, @Req() req: Request) {
-    return await this.authService.resendConfirmationEmail(email, req);
+  async resendEmail(@Body('email') email: string) {
+    return await this.authService.resendConfirmationEmail(email);
   }
 
   @Get('email/verify')
   @Public()
-  async confirmEmailVerification(
-    @Query('token') token: string,
-    @Req() req: Request,
-  ) {
-    return this.authService.confirmEmailVerification(token, req);
+  async confirmEmailVerification(@Query('token') token: string) {
+    return this.authService.confirmEmailVerification(token);
   }
 
   @Post('reset-password')
   @Public()
-  resetPassword(
-    @Query('token') token: string,
-    @Body() dto: ResetPasswordDto,
-    @Req() req: Request,
-  ) {
-    return this.authService.resetPassword(token, dto.newPassword, req);
+  resetPassword(@Query('token') token: string, @Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(token, dto.newPassword);
   }
 
   @Post('forgot-password')
   @Public()
-  forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: Request) {
-    return this.authService.forgotPassword(dto.email, req);
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
   }
 }
