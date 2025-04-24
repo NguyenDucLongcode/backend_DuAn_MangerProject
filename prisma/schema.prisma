@@ -94,13 +94,16 @@ model RefreshToken {
     id             String   @id @default(uuid())                // Khóa chính, tự động tăng
     userId         String                                       // Hỗ trợ được nhiwwuf thiết bị
     token          String    @unique                            // Giá trị của refresh token duy  nhất
+    deviceId       String                                       // Thông tin về thiết bị
     expiresAt      DateTime                                     // Thời gian token hết hạn
-    revoked   Boolean  @default(false)                          // RefreshToken bị hủy
+    revoked        Boolean  @default(false)                     // RefreshToken bị hủy
     createdAt      DateTime @default(now())                   
                         
    
    // Quan hệ với User: Mỗi RefreshToken thuộc về một User cụ thể
    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@unique([userId, deviceId]) // Tạo chỉ mục duy nhất cho userId và deviceId
 }
 
 // GROUP MANAGEMENT

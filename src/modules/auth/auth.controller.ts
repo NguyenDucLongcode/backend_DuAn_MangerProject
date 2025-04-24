@@ -7,6 +7,7 @@ import {
   Body,
   Query,
   Res,
+  Headers,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthenticatedRequest } from './type/type';
@@ -27,8 +28,9 @@ export class AuthController {
   handlerLogin(
     @Req() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
+    @Headers('x-device-id') deviceId: string,
   ) {
-    return this.authService.login(req.user, res);
+    return this.authService.login(req.user, res, deviceId);
   }
 
   @Post('logout')
@@ -36,8 +38,9 @@ export class AuthController {
   handlerLogout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @Headers('x-device-id') deviceId: string,
   ) {
-    return this.authService.logout(req, res);
+    return this.authService.logout(req, res, deviceId);
   }
 
   @Get('register')
@@ -51,8 +54,9 @@ export class AuthController {
   refreshAccessToken(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @Headers('x-device-id') deviceId: string,
   ) {
-    return this.authService.refreshToken(req, res);
+    return this.authService.refreshToken(req, res, deviceId);
   }
 
   @Post('resend-confirmation')

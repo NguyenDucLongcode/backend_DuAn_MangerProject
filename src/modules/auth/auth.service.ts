@@ -47,19 +47,38 @@ export class AuthService {
   }
 
   // Fuc Handler login User
-  async login(user: User, res: Response) {
+  async login(user: User, res: Response, deviceId: string) {
     const isProduction = process.env.NODE_ENV === 'production';
     const payload = { username: user.email, sub: user.id };
 
-    // Save refresh token to database
-    const refreshToken = this.tokenUtil.generateRefreshToken(payload);
-    await this.prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
+    // Check if a refresh token has been revoked for this device
+    const existingToken = await this.prisma.refreshToken.findUnique({
+      where: { userId_deviceId: { userId: user.id, deviceId } },
     });
+
+    const refreshToken: string = this.tokenUtil.generateRefreshToken(payload);
+
+    if (!existingToken) {
+      // No old token → create new one
+      await this.prisma.refreshToken.create({
+        data: {
+          userId: user.id,
+          deviceId,
+          token: refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+    } else {
+      // Have old token → update token and reset revoked
+      await this.prisma.refreshToken.update({
+        where: { userId_deviceId: { userId: user.id, deviceId } },
+        data: {
+          token: refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          revoked: false,
+        },
+      });
+    }
 
     // Save refreshToken to cookie
     res.cookie('refresh_token', refreshToken, {
@@ -75,7 +94,12 @@ export class AuthService {
   }
 
   // Fuc Logout
-  async logout(req: Request, res: Response) {
+  async logout(req: Request, res: Response, deviceId: string) {
+    // check client side device id
+    if (!deviceId) {
+      throw new UnauthorizedException('Missing device ID');
+    }
+
     // Check refresh token
     const cookies = req.cookies as { refresh_token?: string };
     const refreshToken = cookies.refresh_token;
@@ -96,6 +120,11 @@ export class AuthService {
         throw new UnauthorizedException('Refresh token not found');
       }
 
+      // Check the view refresh token required for this deviceId
+      if (tokenRecord.deviceId !== deviceId) {
+        throw new UnauthorizedException('Invalid device ID');
+      }
+
       // Mark the refresh token as revoked (instead of deleting it)
       await this.prisma.refreshToken.update({
         where: { token: refreshToken },
@@ -113,6 +142,11 @@ export class AuthService {
         message: 'Logout successfully',
       };
     } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err; // Don't rethrow as InternalServerErrorException
+      }
+
+      // For other errors, we throw InternalServerErrorException
       throw new InternalServerErrorException('Logout failed');
     }
   }
@@ -164,12 +198,17 @@ export class AuthService {
   }
 
   // Fuc Handler refreshToken
-  async refreshToken(req: Request, res: Response) {
+  async refreshToken(req: Request, res: Response, deviceId: string) {
     const isProduction = process.env.NODE_ENV === 'production';
 
     //get refreshToken token from client
     const cookies = req.cookies as { refresh_token?: string };
     const refreshToken = cookies.refresh_token;
+
+    // check client side device id
+    if (!deviceId) {
+      throw new UnauthorizedException('Missing device ID');
+    }
 
     // check refreshToken
     if (!refreshToken) throw new UnauthorizedException('Missing refresh token');
@@ -183,16 +222,21 @@ export class AuthService {
       // Check if the refresh token exists in the database
       const tokenRecord = await this.prisma.refreshToken.findUnique({
         where: {
-          token: refreshToken,
-          revoked: false,
-          expiresAt: { gt: new Date() },
+          userId_deviceId: {
+            userId: payload.sub,
+            deviceId,
+          },
         },
       });
 
-      if (!tokenRecord) {
-        throw new UnauthorizedException(
-          'Refresh token not found or already revoked',
-        );
+      //Check existence and status token
+      if (!tokenRecord || tokenRecord.revoked) {
+        throw new UnauthorizedException('Refresh token not found or revoked');
+      }
+
+      // Check if token is duplicate
+      if (tokenRecord.token !== refreshToken) {
+        throw new UnauthorizedException('Token mismatch for this device');
       }
 
       // Check if the refresh token has expired (using `expiresAt` from database)
@@ -218,24 +262,31 @@ export class AuthService {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      // Mark the old refresh token as revoked (not delete)
-      await this.prisma.refreshToken.update({
-        where: { token: refreshToken },
-        data: { revoked: true },
-      });
-
       // Save the new refresh token to the database with updated expiration date
-      await this.prisma.refreshToken.create({
+      await this.prisma.refreshToken.update({
+        where: {
+          userId_deviceId: {
+            userId: payload.sub,
+            deviceId,
+          },
+        },
         data: {
-          userId: tokenRecord.userId,
           token: newRefreshToken,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          revoked: false,
         },
       });
 
       return { access_token: newAccessToken };
     } catch (err) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      if (err instanceof UnauthorizedException) {
+        throw err; // Don't rethrow as InternalServerErrorException
+      }
+
+      // For other errors, we throw InternalServerErrorException
+      throw new InternalServerErrorException(
+        'Invalid or expired refresh token',
+      );
     }
   }
 
