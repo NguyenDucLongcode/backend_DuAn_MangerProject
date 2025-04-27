@@ -1,22 +1,13 @@
-import {
-  IsOptional,
-  IsInt,
-  Min,
-  Max,
-  IsString,
-  IsEmail,
-  IsEnum,
-  IsBoolean,
-} from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString, IsEnum } from 'class-validator';
 
-import { UserRoleEnum } from '@prisma/client';
+import { GroupVisibilityEnum } from '@prisma/client';
 import {
-  toBool,
   toEmptyStringAsUndefined,
   toInt,
+  toIntOrUndefined,
 } from '@/common/utils/transform.dto';
 
-export class PaginationDto {
+export class PaginationGroupDevDto {
   //validate limmit
   @IsOptional()
   @toInt()
@@ -37,24 +28,18 @@ export class PaginationDto {
   @IsString({ message: 'Name phải là 1 chuỗi' })
   name?: string;
 
-  // validEmail
+  // valid Visibility
   @IsOptional()
   @toEmptyStringAsUndefined()
-  @IsEmail({}, { message: 'Email không hợp lệ' })
-  email?: string;
-
-  // validRole
-  @IsOptional()
-  @toEmptyStringAsUndefined()
-  @IsEnum(UserRoleEnum, {
-    message: 'Vai trò phải là CUSTOMER, ADMIN, LEADER, CODER',
+  @IsEnum(GroupVisibilityEnum, {
+    message: 'Khả năng hiển thị phải là PRIVATE, PUBLIC, RESTRICTED',
   })
-  role?: string;
+  visibility!: GroupVisibilityEnum;
 
-  // validate isActive
+  // validate maxMembers
   @IsOptional()
-  @toEmptyStringAsUndefined()
-  @toBool()
-  @IsBoolean({ message: 'isActive phải là true hoặc false' })
-  isActive?: boolean;
+  @toIntOrUndefined()
+  @IsInt({ message: 'Số thành viên phải là một số nguyên' })
+  @Min(1, { message: 'Số thành viên phải lớn hơn hoặc bằng 1' })
+  maxMembers!: number;
 }

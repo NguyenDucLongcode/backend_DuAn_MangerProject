@@ -12,6 +12,7 @@ import {
   PASSWORD_STRENGTH_MESSAGE,
   PasswordStrengthRegex,
 } from '@/common/constants';
+import { toEmptyStringAsUndefined } from '@/common/utils/transform.dto';
 
 export class CreateUserDto {
   // validEmail
@@ -46,6 +47,7 @@ export class CreateUserDto {
 
   // validRole
   @IsOptional()
+  @toEmptyStringAsUndefined()
   @IsEnum(UserRoleEnum, {
     message: 'Vai trò phải là CUSTOMER, ADMIN, LEADER, CODER',
   })

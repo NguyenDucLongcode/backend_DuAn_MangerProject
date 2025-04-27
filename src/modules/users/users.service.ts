@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '@/prisma/prisma.service'; // primas
+import { $Enums, Prisma } from '@prisma/client';
 import { CreateUserDto, PaginationDto, UpdateUserDto } from './dto'; // dto
 // common utils
 import { removePassword, hashPasswordHelper } from '@/common/utils/user.utils';
@@ -24,7 +25,6 @@ import {
 @Injectable()
 export class UsersService {
   constructor(
-    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {}
@@ -60,7 +60,7 @@ export class UsersService {
     });
 
     //delete key
-    await this.redisService.delByPattern('users:pagination:page=1&limit=*');
+    await this.redisService.delByPattern('users:pagination:*');
 
     // Return seccessfull result
     return {
@@ -71,28 +71,49 @@ export class UsersService {
 
   // pagination user
   async Pagination(paginationDto: PaginationDto) {
-    const { page, limit } = paginationDto;
+    const { page, limit, name, email, role, isActive } = paginationDto;
+
     const skip = (page - 1) * limit;
     const take = limit;
 
-    const cacheKey = `users:pagination:page=${page}&limit=${limit}`;
-    const cachedString = await this.redisService.get(cacheKey);
+    // Tạo điều kiện where động
+    const where: Prisma.UserWhereInput = {};
+    if (name) where.name = { contains: name, mode: 'insensitive' };
+    if (email) where.email = { contains: email, mode: 'insensitive' };
+    if (role) where.role = { equals: role as $Enums.UserRoleEnum };
+    if (typeof isActive === 'boolean') where.isActive = isActive;
 
-    // return result when key is in redis
-    if (cachedString) {
-      // data type casting when converting json
-      const cached: UserPaginationCache = UserPaginationCacheSchema.parse(
-        JSON.parse(cachedString),
-      );
-      return {
-        ...cached,
-      };
+    // Chỉ tạo cacheKey nếu name >= 3 ký tự hoặc không có name
+    let cacheKey: string | null = null;
+    const isCacheable = !name || name.length >= 3;
+
+    if (isCacheable) {
+      // create cache key
+      const filterKey = JSON.stringify({
+        page,
+        limit,
+        name,
+        email,
+        role,
+        isActive,
+      });
+      cacheKey = `users:pagination:${filterKey}`;
+
+      // get data from key in redis
+      const cachedString = await this.redisService.get(cacheKey);
+      if (cachedString) {
+        const cached: UserPaginationCache = UserPaginationCacheSchema.parse(
+          JSON.parse(cachedString),
+        );
+        return cached;
+      }
     }
 
-    // remove password from user
+    // Query DB
     const users = await this.prisma.user.findMany({
       skip,
       take,
+      where,
       orderBy: {
         createdAt: 'desc',
       },
@@ -110,7 +131,7 @@ export class UsersService {
     });
 
     // totalPages
-    const totalCount = await this.prisma.user.count();
+    const totalCount = await this.prisma.user.count({ where });
 
     // Return seccessfull result
     const result = {
@@ -121,7 +142,10 @@ export class UsersService {
       currentPage: page,
     };
 
-    await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
+    // Lưu cache nếu hợp lệ
+    if (cacheKey) {
+      await this.redisService.set(cacheKey, result, 1800); // 30 phút
+    }
 
     return result;
   }

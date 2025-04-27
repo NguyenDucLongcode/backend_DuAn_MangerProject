@@ -1,10 +1,15 @@
 // system
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  ExecutionContext,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
 import { PrismaModule } from './prisma/prisma.module'; // primas module
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'; // rate limiting
+import { ThrottlerModule, ThrottlerGuard, seconds } from '@nestjs/throttler'; // rate limiting
 import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware'; // logger
 import { CoreModule } from './modules/core/core.module'; // total module
 import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard'; // jwtAuthGuard
@@ -17,6 +22,8 @@ import { RedisModule } from './redis/redis.module'; // catche
 import { CronJobsModule } from './services/cron_Jobs/CronJobs.module'; // cron job
 import { AllExceptionsFilter } from './common/http-exception/catch-everything.filter';
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
+
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 
 @Module({
   imports: [
@@ -34,10 +41,25 @@ import { TransformResponseInterceptor } from './common/interceptors/transform-re
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          ttl: parseInt(process.env.THROTTLE_TTL ?? '60000', 10), // default '60000' if process.env.THROTTLE_TTL is undefined
-          limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10), // default '100' if process.env.THROTTLE_LIMIT is undefined
+          ttl: parseInt(process.env.THROTTLE_TTL ?? '60000', 10),
+          limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10),
         },
       ],
+      // default config (host = localhost, port = 6379)
+      storage: new ThrottlerStorageRedisService(),
+
+      getTracker: (req: Record<string, any>, _context: ExecutionContext) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        return String(req.headers['x-device-id'] || req.ip);
+      },
+
+      generateKey: (
+        _context: ExecutionContext,
+        trackerString: string,
+        _throttlerName: string,
+      ) => {
+        return trackerString;
+      },
     }),
 
     PrismaModule, // Prisma
