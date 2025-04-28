@@ -11,7 +11,7 @@ export const GroupDevPaginationItemSchema = z.object({
 
 export const GroupDevPaginationCacheSchema = z.object({
   message: z.string(),
-  groupDevs: z.array(GroupDevPaginationItemSchema), // Lưu danh sách users trực tiếp
+  Projects: z.array(GroupDevPaginationItemSchema),
   total: z.number(),
   totalPages: z.number(),
   currentPage: z.number(),
