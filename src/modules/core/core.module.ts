@@ -5,6 +5,8 @@ import { GroupDevModule } from '../group-dev/group-dev.module';
 import { GroupLeaderModule } from '../group-leader/group-leader.module';
 import { GroupMemberModule } from '../group-member/group-member.module';
 import { ProjectsModule } from '../projects/projects.module';
+import { TasksModule } from '../tasks/tasks.module';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { ProjectsModule } from '../projects/projects.module';
     GroupLeaderModule,
     GroupMemberModule,
     ProjectsModule,
+    TasksModule,
+    SubscriptionModule,
   ], // Import các module cần thiết vào đây
   exports: [
     AuthModule,
@@ -22,6 +26,8 @@ import { ProjectsModule } from '../projects/projects.module';
     GroupLeaderModule,
     GroupMemberModule,
     ProjectsModule,
+    TasksModule,
+    SubscriptionModule,
   ], // Export lại các module này để có thể sử dụng ở nơi khác
 })
 export class CoreModule {}

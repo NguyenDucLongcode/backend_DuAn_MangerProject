@@ -163,8 +163,8 @@ model GroupMember {
 // SUBSCRIPTIONS
 model Subscription {
     id         String   @id @default(uuid())             // Khóa chính
-    userId     String      @unique                          // Mỗi người dùng có một subscription duy nhất
-    plan       SubscriptionPlan                          // Gói đăng ký của người dùng (Free, Basic, Pro,ENTERPRISE)
+    userId     String      @unique                       // Mỗi người dùng có một subscription duy nhất
+    plan       SubscriptionPlan  @default(FREE)          // Gói đăng ký của người dùng (Free, Basic, Pro,ENTERPRISE)
     expiresAt  DateTime                                  // Thời gian hết hạn của đăng ký
     price      Float                                     // Giá gói đăng ký
     createdAt  DateTime @default(now())                  // Thời gian người dùng đăng ký
@@ -192,7 +192,7 @@ model Order {
 
 model Payment {
     id         String   @id @default(uuid())                  // Khóa chính
-    orderId    String      @unique                               // Mã đơn hàng (Order) mà thanh toán này thuộc về
+    orderId    String      @unique                            // Mã đơn hàng (Order) mà thanh toán này thuộc về
     amount     Float                                          // Số tiền thanh toán
     method     String                                         // Phương thức thanh toán (ví dụ: thẻ tín dụng, PayPal, chuyển khoản)
     status     PaymentStatus @default(PENDING)                // Trạng thái thanh toán (Chờ xử lý, Đã thanh toán, Hủy)
@@ -228,7 +228,7 @@ model Task {
     projectId    String                                     // Mã dự án (Project) mà nhiệm vụ này thuộc về
     assignedTo   String?                                    // Mã người dùng (User) được giao nhiệm vụ (optional)                            
     title        String                                     // Tiêu đề nhiệm vụ
-    description  String?                                   // Mô tả nhiệm vụ
+    description  String?                                    // Mô tả nhiệm vụ
     status       TaskStatus @default(PENDING)               // Trạng thái nhiệm vụ (Chờ xử lý, Đang làm, Hoàn thành)
     dueDate      DateTime?                                  // Hạn hoàn thành nhiệm vụ
     createdAt    DateTime @default(now())                   // Thời gian tạo nhiệm vụ
@@ -262,7 +262,7 @@ model Message {
 // NOTIFICATIONS
 model Notification {
     id        String   @id @default(uuid())        // Khóa chính
-    userId    String                                  // Mã người dùng (User) nhận thông báo
+    userId    String                               // Mã người dùng (User) nhận thông báo
     message   String                               // Nội dung thông báo
     read      Boolean @default(false)              // Trạng thái đã đọc hay chưa
     createdAt DateTime @default(now())             // Thời gian tạo thông báo

@@ -7,10 +7,9 @@ export const toBool = () =>
     return undefined;
   });
 
-export const toEmptyStringAsUndefined = () =>
-  Transform(({ value }): unknown => {
-    return value === '' ? undefined : value;
-  });
+export function toEmptyStringAsUndefined() {
+  return Transform(({ value }): unknown => (value === '' ? undefined : value));
+}
 
 export const toInt = () =>
   Transform(({ value }: { value: unknown }) => {
