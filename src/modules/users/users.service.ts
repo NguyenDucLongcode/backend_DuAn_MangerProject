@@ -188,10 +188,21 @@ export class UsersService {
 
   // update user
   async update(id: string, updateUserDto: UpdateUserDto) {
+    const { name, phone, address, gender, role } = updateUserDto;
     // check user exists by id
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found, please choose another id');
+    }
+    // Check if  phone exists in database. If so, throw an error.
+    if (phone) {
+      const exitisPhoneNumber = await this.prisma.user.findFirst({
+        where: { phone },
+      });
+
+      if (exitisPhoneNumber) {
+        throw new ConflictException('Phone number already exists');
+      }
     }
 
     // update information user
@@ -200,9 +211,11 @@ export class UsersService {
       data: updateUserDto,
     });
 
-    // delete all 'users:pagination:*' keys cache
-    await this.redisService.delByPattern('users:pagination:*');
-    await this.redisService.del(`users:findOne:id=${id}`);
+    // delete key
+    if (name || phone || address || gender || role) {
+      await this.redisService.delByPattern('users:pagination:*');
+      await this.redisService.del(`users:findOne:id=${id}`);
+    }
 
     // Return seccessfull result
     return {

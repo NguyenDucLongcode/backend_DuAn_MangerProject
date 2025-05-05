@@ -158,6 +158,7 @@ export class GroupDevService {
   }
 
   async updateGroupDev(id: string, updateGroupDevDto: UpdateGroupDevDto) {
+    const { name, description, visibility, maxMembers } = updateGroupDevDto;
     // check group Dev exists by id
     const groupDev = await this.prisma.groupDev.findUnique({ where: { id } });
     if (!groupDev) {
@@ -173,8 +174,10 @@ export class GroupDevService {
     });
 
     // delete all  keys cache
-    await this.redisService.delByPattern('groupDev:pagination:*');
-    await this.redisService.del(`groupDev:findOne:id=${id}`);
+    if (name || description || visibility || maxMembers) {
+      await this.redisService.delByPattern('groupDev:pagination:*');
+      await this.redisService.del(`groupDev:findOne:id=${id}`);
+    }
 
     // Return seccessfull result
     return {

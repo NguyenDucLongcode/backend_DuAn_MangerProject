@@ -174,7 +174,10 @@ export class TasksService {
   }
 
   async updateTask(id: string, updateTaskDto: UpdateTaskDto) {
-    //chgeck exits task
+    const { projectId, assignedTo, title, description, status, dueDate } =
+      updateTaskDto;
+
+    //check exits task
     const existingTask = await this.prisma.task.findUnique({
       where: { id },
     });
@@ -185,17 +188,25 @@ export class TasksService {
       );
     }
 
+    // dueDate must be greater than current time
+    if (dueDate && new Date(dueDate) < new Date()) {
+      throw new BadRequestException('Due date must be in the future');
+    }
+
     // Query DB
     const updatedTask = await this.prisma.task.update({
       where: { id },
       data: {
         ...updateTaskDto,
+        dueDate: dueDate ? new Date(dueDate) : '',
       },
     });
 
     //delete key
-    await this.redisService.delByPattern('task:pagination:*');
-    await this.redisService.del(`task:findOne:id=${id}`);
+    if (projectId || assignedTo || title || description || dueDate || status) {
+      await this.redisService.delByPattern('task:pagination:*');
+      await this.redisService.del(`task:findOne:id=${id}`);
+    }
 
     return {
       message: 'Task updated successfully',

@@ -13,7 +13,7 @@ export const TaskIDItemSchema = z.object({
 
 export const TaskIDCacheSchema = z.object({
   message: z.string(),
-  project: TaskIDItemSchema,
+  task: TaskIDItemSchema,
 });
 
 export type TaskIDCache = z.infer<typeof TaskIDCacheSchema>;

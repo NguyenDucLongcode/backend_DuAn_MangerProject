@@ -8,9 +8,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { PaginationProjectDto } from './dto/pagination-project.dto';
+
+// DTO
+import {
+  CreateProjectDto,
+  UpdateProjectDto,
+  PaginationProjectDto,
+} from './dto';
 
 @Controller('projects')
 export class ProjectsController {

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -21,14 +25,26 @@ export class ProjectsService {
     private readonly redisService: RedisService,
   ) {}
   async createProjet(createProjectDto: CreateProjectDto) {
+    const { groupId, name } = createProjectDto;
     // check group dev is exits
     const exitsGroupDev = await this.prisma.groupDev.findFirst({
-      where: { id: createProjectDto.groupId },
+      where: { id: groupId },
     });
 
     if (!exitsGroupDev) {
       throw new NotFoundException(
         `Group dev not found, please chose groupId different`,
+      );
+    }
+
+    // Check for duplicate project names within a group
+    const exitsName = await this.prisma.project.findFirst({
+      where: { groupId, name },
+    });
+
+    if (exitsName) {
+      throw new BadRequestException(
+        `Name Project already exits, please chose name different`,
       );
     }
 
@@ -145,6 +161,8 @@ export class ProjectsService {
   }
 
   async updateProject(id: string, updateProjectDto: UpdateProjectDto) {
+    const { description, groupId, name } = updateProjectDto;
+
     //chgeck exits Project
     const existingProject = await this.prisma.project.findUnique({
       where: { id },
@@ -165,8 +183,10 @@ export class ProjectsService {
     });
 
     //delete key
-    await this.redisService.delByPattern('project:pagination:*');
-    await this.redisService.del(`project:findOne:id=${id}`);
+    if (description || name || groupId) {
+      await this.redisService.delByPattern('project:pagination:*');
+      await this.redisService.del(`project:findOne:id=${id}`);
+    }
 
     return {
       message: 'Project updated successfully',

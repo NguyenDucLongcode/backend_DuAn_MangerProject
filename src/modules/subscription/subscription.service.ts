@@ -211,8 +211,10 @@ export class SubscriptionService {
     });
 
     //delete key
-    await this.redisService.delByPattern('subscriptions:pagination:*');
-    await this.redisService.del(`subscriptions:findOne:id=${id}`);
+    if (plan || expiresAt || price) {
+      await this.redisService.delByPattern('subscriptions:pagination:*');
+      await this.redisService.del(`subscriptions:findOne:id=${id}`);
+    }
 
     return {
       message: 'Subscription updated successfully',

@@ -8,9 +8,9 @@ import {
   Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskDto } from './dto/update-task.dto';
-import { PaginationTaskDto } from './dto/pagination-task.dto';
+
+// dto
+import { CreateTaskDto, UpdateTaskDto, PaginationTaskDto } from './dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -26,7 +26,7 @@ export class TasksController {
     return this.tasksService.Pagination(paginationDto);
   }
 
-  @Get(':id')
+  @Get()
   findOne(@Query('id') id: string) {
     return this.tasksService.findTaskById(id);
   }

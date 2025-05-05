@@ -142,6 +142,20 @@ export class GroupLeaderService {
       );
     }
 
+    // check user is Leader
+    const isLeaderUser = await this.prisma.user.findFirst({
+      where: {
+        id: changeGroupLeaderDto.userId,
+        role: 'LEADER',
+      },
+    });
+
+    if (!isLeaderUser) {
+      throw new NotFoundException(
+        'User is not leader, please choose another id',
+      );
+    }
+
     // Query DB
     await this.prisma.groupLeader.updateMany({
       where: { groupId },
