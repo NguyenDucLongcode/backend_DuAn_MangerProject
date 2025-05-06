@@ -7,6 +7,8 @@ import { GroupMemberModule } from '../group-member/group-member.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
+import { ReviewModule } from '../review/review.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { SubscriptionModule } from '../subscription/subscription.module';
     ProjectsModule,
     TasksModule,
     SubscriptionModule,
+    ReviewModule,
+    NotificationModule,
   ], // Import các module cần thiết vào đây
   exports: [
     AuthModule,
@@ -28,6 +32,8 @@ import { SubscriptionModule } from '../subscription/subscription.module';
     ProjectsModule,
     TasksModule,
     SubscriptionModule,
+    ReviewModule,
+    NotificationModule,
   ], // Export lại các module này để có thể sử dụng ở nơi khác
 })
 export class CoreModule {}

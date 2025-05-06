@@ -179,11 +179,6 @@ export class SubscriptionService {
   ) {
     const { plan, expiresAt, price } = updateSubscriptionDto;
 
-    // validate price
-    if (price && price <= 0) {
-      throw new BadRequestException('Price phải lớn hơn hoặc bằng 1');
-    }
-
     // expiresAt  must be greater than current time
     if (expiresAt && new Date(expiresAt) < new Date()) {
       throw new BadRequestException('expiresAt  must be in the future');
@@ -205,16 +200,14 @@ export class SubscriptionService {
       where: { id },
       data: {
         plan,
-        expiresAt: expiresAt ? new Date(expiresAt) : '',
+        expiresAt: new Date(expiresAt),
         price,
       },
     });
 
     //delete key
-    if (plan || expiresAt || price) {
-      await this.redisService.delByPattern('subscriptions:pagination:*');
-      await this.redisService.del(`subscriptions:findOne:id=${id}`);
-    }
+    await this.redisService.delByPattern('subscriptions:pagination:*');
+    await this.redisService.del(`subscriptions:findOne:id=${id}`);
 
     return {
       message: 'Subscription updated successfully',

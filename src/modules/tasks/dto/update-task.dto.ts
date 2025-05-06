@@ -1,17 +1,21 @@
 import { toEmptyStringAsUndefined } from '@/common/utils/transform.dto';
 import { TaskStatus } from '@prisma/client';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class UpdateTaskDto {
   //validate projectId
-  @IsOptional()
-  @toEmptyStringAsUndefined()
+  @IsNotEmpty({ message: 'ProjectId không được để trống' })
   @IsString({ message: 'ProjectId phải là 1 chuỗi' })
   projectId!: string;
 
   //validate UserId
-  @IsOptional()
-  @toEmptyStringAsUndefined()
+  @IsNotEmpty({ message: 'UserId không được để trống' })
   @IsString({ message: 'UserId phải là 1 chuỗi' })
   assignedTo?: string;
 

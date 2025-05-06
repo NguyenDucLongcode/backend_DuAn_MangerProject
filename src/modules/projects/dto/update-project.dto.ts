@@ -1,11 +1,10 @@
 import { toEmptyStringAsUndefined } from '@/common/utils/transform.dto';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class UpdateProjectDto {
   //validate groupId
-  @IsOptional()
-  @toEmptyStringAsUndefined()
+  @IsNotEmpty({ message: 'GroupId không được để trống' })
   @IsString({ message: 'GroupId phải là 1 chuỗi' })
-  groupId?: string;
+  groupId!: string;
 
   //validate name
   @IsOptional()

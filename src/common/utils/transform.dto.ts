@@ -23,6 +23,6 @@ export const toInt = () =>
 export const toIntOrUndefined = () =>
   Transform(({ value }) => {
     if (value === '') return undefined;
-    const num = parseInt(String(value), 10);
+    const num = Number(value);
     return isNaN(num) ? undefined : num;
   });

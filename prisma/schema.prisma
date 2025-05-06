@@ -293,6 +293,8 @@ model Review {
     rating    Int                                 // Điểm đánh giá (1-5)
     comment   String?                             // Bình luận đánh giá
     createdAt DateTime @default(now())            // Thời gian tạo đánh giá
+
+    @@unique([userId, projectId])                 // Chỉ cho phép 1 review cho mỗi (user, project)
    
     // Quan hệ với Project: Mỗi đánh giá thuộc về một dự án
     project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

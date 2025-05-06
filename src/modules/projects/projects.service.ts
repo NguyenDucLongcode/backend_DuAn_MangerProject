@@ -183,10 +183,8 @@ export class ProjectsService {
     });
 
     //delete key
-    if (description || name || groupId) {
-      await this.redisService.delByPattern('project:pagination:*');
-      await this.redisService.del(`project:findOne:id=${id}`);
-    }
+    await this.redisService.delByPattern('project:pagination:*');
+    await this.redisService.del(`project:findOne:id=${id}`);
 
     return {
       message: 'Project updated successfully',

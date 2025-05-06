@@ -203,10 +203,8 @@ export class TasksService {
     });
 
     //delete key
-    if (projectId || assignedTo || title || description || dueDate || status) {
-      await this.redisService.delByPattern('task:pagination:*');
-      await this.redisService.del(`task:findOne:id=${id}`);
-    }
+    await this.redisService.delByPattern('task:pagination:*');
+    await this.redisService.del(`task:findOne:id=${id}`);
 
     return {
       message: 'Task updated successfully',
