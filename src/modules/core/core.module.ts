@@ -9,6 +9,9 @@ import { TasksModule } from '../tasks/tasks.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { ReviewModule } from '../review/review.module';
 import { NotificationModule } from '../notification/notification.module';
+import { ChatModule } from '../chat/chat.module';
+import { OrderModule } from '../order/order.module';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { NotificationModule } from '../notification/notification.module';
     SubscriptionModule,
     ReviewModule,
     NotificationModule,
+    ChatModule,
+    OrderModule,
+    PaymentModule,
   ], // Import các module cần thiết vào đây
   exports: [
     AuthModule,
@@ -34,6 +40,9 @@ import { NotificationModule } from '../notification/notification.module';
     SubscriptionModule,
     ReviewModule,
     NotificationModule,
+    ChatModule,
+    OrderModule,
+    PaymentModule,
   ], // Export lại các module này để có thể sử dụng ở nơi khác
 })
 export class CoreModule {}

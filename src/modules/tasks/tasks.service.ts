@@ -71,7 +71,10 @@ export class TasksService {
     //delete key
     await this.redisService.delByPattern('task:pagination:*');
 
-    return task;
+    return {
+      message: 'Project create successfully',
+      task,
+    };
   }
 
   async Pagination(paginationDto: PaginationTaskDto) {
@@ -174,8 +177,7 @@ export class TasksService {
   }
 
   async updateTask(id: string, updateTaskDto: UpdateTaskDto) {
-    const { projectId, assignedTo, title, description, status, dueDate } =
-      updateTaskDto;
+    const { dueDate } = updateTaskDto;
 
     //check exits task
     const existingTask = await this.prisma.task.findUnique({

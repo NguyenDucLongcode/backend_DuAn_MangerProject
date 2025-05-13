@@ -13,6 +13,7 @@ export class RedisService {
     if (ttlSeconds) {
       return this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
     }
+
     return this.redis.set(key, JSON.stringify(value));
   }
 
@@ -44,5 +45,20 @@ export class RedisService {
     if (keys.length) {
       await this.redis.del(...keys);
     }
+  }
+
+  async sadd(key: string, value: string) {
+    return this.redis.sadd(key, value);
+  }
+
+  async srem(key: string, value: string) {
+    return this.redis.srem(key, value);
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    return this.redis.smembers(key);
+  }
+  async keys(pattern: string): Promise<string[]> {
+    return this.redis.keys(pattern);
   }
 }

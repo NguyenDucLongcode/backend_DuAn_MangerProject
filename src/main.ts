@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { validationPipeConfig } from './configs/validation.pipe.config'; // config ValidationPipe data request
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
+import { RedisIoAdapter } from './redis/RedisIoAdapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -48,6 +49,11 @@ async function bootstrap() {
       crossOriginEmbedderPolicy: false, // để tránh lỗi nếu bạn không cần cross-origin isolation
     }),
   );
+
+  // config redisIoAdapter WebSocker
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 
   const port = process.env.PORT || 8080;
 
