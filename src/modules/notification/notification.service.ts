@@ -120,7 +120,7 @@ export class NotificationService {
   }
 
   async Pagination(paginationDto: PaginationNotificationDto) {
-    const { page, limit, userId, read } = paginationDto;
+    const { page, limit, userId, read, fromDate, toDate } = paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -130,12 +130,21 @@ export class NotificationService {
     if (userId) where.userId = { contains: userId, mode: 'insensitive' };
     if (typeof read === 'boolean') where.read = { equals: read };
 
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
+
     // create cache key
     const filterKey = JSON.stringify({
       page,
       limit,
       userId,
       read,
+      fromDate,
+      toDate,
     });
     const cacheKey = `notifications:pagination:${filterKey}`;
 

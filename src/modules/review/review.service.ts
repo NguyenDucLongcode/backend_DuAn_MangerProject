@@ -79,7 +79,8 @@ export class ReviewService {
   }
 
   async Pagination(paginationDto: PaginationReviewDto) {
-    const { page, limit, userId, projectId, rating } = paginationDto;
+    const { page, limit, userId, projectId, rating, fromDate, toDate } =
+      paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -91,6 +92,13 @@ export class ReviewService {
       where.projectId = { contains: projectId, mode: 'insensitive' };
     if (rating) where.rating = { equals: rating };
 
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
+
     // create cache key
     const filterKey = JSON.stringify({
       page,
@@ -98,6 +106,8 @@ export class ReviewService {
       userId,
       projectId,
       rating,
+      fromDate,
+      toDate,
     });
     const cacheKey = `reviews:pagination:${filterKey}`;
 

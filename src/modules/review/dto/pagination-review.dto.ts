@@ -41,4 +41,12 @@ export class PaginationReviewDto {
   @toEmptyStringAsUndefined()
   @IsString({ message: 'ProjectId phải là 1 chuỗi' })
   projectId?: string;
+
+  @IsOptional()
+  @IsString({ message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
+  fromDate?: string;
+
+  @IsOptional()
+  @IsString({ message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
+  toDate?: string;
 }

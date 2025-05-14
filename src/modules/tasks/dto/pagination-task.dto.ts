@@ -38,4 +38,12 @@ export class PaginationTaskDto {
     message: 'Trạng thái phải là PENDING,  IN_PROGRESS, COMPLETED',
   })
   status?: TaskStatus;
+
+  @IsOptional()
+  @IsString({ message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
+  fromDate?: string;
+
+  @IsOptional()
+  @IsString({ message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
+  toDate?: string;
 }

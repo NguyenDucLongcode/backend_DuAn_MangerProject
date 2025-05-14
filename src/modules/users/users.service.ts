@@ -71,7 +71,8 @@ export class UsersService {
 
   // pagination user
   async Pagination(paginationDto: PaginationDto) {
-    const { page, limit, name, email, role, isActive } = paginationDto;
+    const { page, limit, name, email, role, isActive, fromDate, toDate } =
+      paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -82,6 +83,13 @@ export class UsersService {
     if (email) where.email = { contains: email, mode: 'insensitive' };
     if (role) where.role = { equals: role as $Enums.UserRoleEnum };
     if (typeof isActive === 'boolean') where.isActive = isActive;
+
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
 
     // Chỉ tạo cacheKey nếu name >= 3 ký tự hoặc không có name
     let cacheKey: string | null = null;
@@ -96,6 +104,8 @@ export class UsersService {
         email,
         role,
         isActive,
+        fromDate,
+        toDate,
       });
       cacheKey = `users:pagination:${filterKey}`;
 

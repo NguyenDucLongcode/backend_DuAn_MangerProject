@@ -62,7 +62,7 @@ export class ProjectsService {
   }
 
   async Pagination(paginationDto: PaginationProjectDto) {
-    const { page, limit, name, groupId } = paginationDto;
+    const { page, limit, name, groupId, fromDate, toDate } = paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -71,6 +71,13 @@ export class ProjectsService {
     const where: Prisma.ProjectWhereInput = {};
     if (name) where.name = { contains: name, mode: 'insensitive' };
     if (groupId) where.groupId = { contains: groupId, mode: 'insensitive' };
+
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
 
     // Chỉ tạo cacheKey nếu name >= 3 ký tự hoặc không có name
     let cacheKey: string | null = null;
@@ -83,6 +90,8 @@ export class ProjectsService {
         limit,
         name,
         groupId,
+        fromDate,
+        toDate,
       });
       cacheKey = `project:pagination:${filterKey}`;
 
@@ -161,9 +170,7 @@ export class ProjectsService {
   }
 
   async updateProject(id: string, updateProjectDto: UpdateProjectDto) {
-    const { description, groupId, name } = updateProjectDto;
-
-    //chgeck exits Project
+    //check exits Project
     const existingProject = await this.prisma.project.findUnique({
       where: { id },
     });

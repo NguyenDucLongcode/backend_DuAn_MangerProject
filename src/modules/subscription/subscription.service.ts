@@ -80,7 +80,7 @@ export class SubscriptionService {
   }
 
   async Pagination(paginationDto: PaginationSubscriptionDto) {
-    const { page, limit, userId, plan } = paginationDto;
+    const { page, limit, userId, plan, fromDate, toDate } = paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -90,12 +90,21 @@ export class SubscriptionService {
     if (userId) where.userId = { contains: userId, mode: 'insensitive' };
     if (plan) where.plan = { equals: plan };
 
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
+
     // create cache key
     const filterKey = JSON.stringify({
       page,
       limit,
       userId,
       plan,
+      fromDate,
+      toDate,
     });
     const cacheKey = `subscriptions:pagination:${filterKey}`;
 

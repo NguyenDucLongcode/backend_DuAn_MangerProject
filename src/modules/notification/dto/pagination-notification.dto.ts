@@ -40,4 +40,12 @@ export class PaginationNotificationDto {
   @toBool()
   @IsBoolean({ message: 'Read phải là kiểu boolean' })
   read?: boolean;
+
+  @IsOptional()
+  @IsString({ message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
+  fromDate?: string;
+
+  @IsOptional()
+  @IsString({ message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
+  toDate?: string;
 }

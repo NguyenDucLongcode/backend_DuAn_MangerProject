@@ -57,4 +57,12 @@ export class PaginationDto {
   @toBool()
   @IsBoolean({ message: 'isActive phải là true hoặc false' })
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString({ message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
+  fromDate?: string;
+
+  @IsOptional()
+  @IsString({ message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
+  toDate?: string;
 }

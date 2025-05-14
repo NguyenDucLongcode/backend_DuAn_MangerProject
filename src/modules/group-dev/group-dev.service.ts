@@ -55,7 +55,8 @@ export class GroupDevService {
   }
 
   async Pagination(paginationDto: PaginationGroupDevDto) {
-    const { page, limit, name, visibility, maxMembers } = paginationDto;
+    const { page, limit, name, visibility, maxMembers, fromDate, toDate } =
+      paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -65,6 +66,13 @@ export class GroupDevService {
     if (name) where.name = { contains: name, mode: 'insensitive' };
     if (maxMembers) where.maxMembers = { equals: maxMembers };
     if (visibility) where.visibility = { equals: visibility };
+
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
 
     // Chỉ tạo cacheKey nếu name >= 3 ký tự hoặc không có name
     let cacheKey: string | null = null;
@@ -78,6 +86,8 @@ export class GroupDevService {
         name,
         maxMembers,
         visibility,
+        fromDate,
+        toDate,
       });
       cacheKey = `groupDev:pagination:${filterKey}`;
 

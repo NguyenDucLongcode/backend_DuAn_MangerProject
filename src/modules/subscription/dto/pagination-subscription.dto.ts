@@ -32,4 +32,12 @@ export class PaginationSubscriptionDto {
     message: 'Vai trò phải là FREE, BASIC, PRO, ENTERPRISE',
   })
   plan?: SubscriptionPlan;
+
+  @IsOptional()
+  @IsString({ message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
+  fromDate?: string;
+
+  @IsOptional()
+  @IsString({ message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
+  toDate?: string;
 }

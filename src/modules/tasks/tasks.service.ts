@@ -78,7 +78,8 @@ export class TasksService {
   }
 
   async Pagination(paginationDto: PaginationTaskDto) {
-    const { page, limit, assignedTo, projectId, status } = paginationDto;
+    const { page, limit, assignedTo, projectId, status, fromDate, toDate } =
+      paginationDto;
 
     const skip = (page - 1) * limit;
     const take = limit;
@@ -91,6 +92,13 @@ export class TasksService {
       where.projectId = { contains: projectId, mode: 'insensitive' };
     if (status) where.status = { equals: status };
 
+    if (fromDate || toDate) {
+      where.createdAt = {
+        ...(fromDate && { gte: new Date(fromDate) }),
+        ...(toDate && { lte: new Date(toDate) }),
+      };
+    }
+
     // create cache key
     const filterKey = JSON.stringify({
       page,
@@ -98,6 +106,8 @@ export class TasksService {
       assignedTo,
       projectId,
       status,
+      fromDate,
+      toDate,
     });
     const cacheKey = `task:pagination:${filterKey}`;
 
