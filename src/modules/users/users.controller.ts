@@ -6,17 +6,35 @@ import {
   Patch,
   Delete,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+
+// DTO
 import { CreateUserDto, PaginationDto, UpdateUserDto } from './dto';
+
+// multer
+import { FileInterceptor } from '@nestjs/platform-express';
+import { imageFileAvatarFilter } from '@/cloudinary/filter/filter.user.avatar';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post('create')
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { files: 1 },
+      fileFilter: imageFileAvatarFilter,
+    }),
+  )
+  create(
+    @Body()
+    createUserDto: CreateUserDto,
+    @UploadedFile() file?: MulterFile,
+  ) {
+    return this.usersService.create(createUserDto, file);
   }
 
   @Get('pagination')
@@ -30,8 +48,18 @@ export class UsersController {
   }
 
   @Patch('update')
-  update(@Query('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { files: 1 },
+      fileFilter: imageFileAvatarFilter,
+    }),
+  )
+  update(
+    @Query('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file?: MulterFile,
+  ) {
+    return this.usersService.update(id, updateUserDto, file);
   }
 
   @Delete('delete')

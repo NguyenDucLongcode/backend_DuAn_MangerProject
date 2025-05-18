@@ -56,6 +56,8 @@ model User {
     address    String?                                        // Địa chỉ
     gender     String?                                        // Giới tính
     role       UserRoleEnum @default(CUSTOMER)                // Vị trí user (mặc định là customer)
+    avatar_url     String?                                    // avatar user 
+    avatar_public_id  String?                                 // public_id( dùng để xóa ảnh)  
     isActive   Boolean   @default(false)                      // Trạng thái xác thực email
     createdAt  DateTime  @default(now())                      // Ngày tạo user
     
@@ -113,6 +115,7 @@ model GroupDev {
     description   String?                                    // Mô tả nhóm (tuỳ chọn)
     visibility    GroupVisibilityEnum @default(PRIVATE)      // Chế độ hiển thị nhóm (private, public, restricted)
     maxMembers    Int?                                       // Số lượng thành viên tối đa (tuỳ chọn)
+    image         String?                                    // Ảnh đại diện cho nhóm 
     createdAt     DateTime @default(now())                   // Thời gian nhóm được tạo
     
     // Quan hệ với các lãnh đạo nhóm (GroupLeader)
@@ -146,8 +149,8 @@ model GroupLeader {
 
 model GroupMember {
     id        String   @id @default(uuid())               // Khóa chính
-    groupId   String                                         // Mã nhóm mà thành viên thuộc về
-    userId    String                                         // Mã người dùng (User) là thành viên của nhóm
+    groupId   String                                      // Mã nhóm mà thành viên thuộc về
+    userId    String                                      // Mã người dùng (User) là thành viên của nhóm
     joinedAt  DateTime @default(now())                    // Thời gian tham gia nhóm
     
     // Quan hệ với GroupDev: Mỗi thành viên thuộc về một GroupDev (nhóm phát triển)
@@ -178,10 +181,10 @@ model Subscription {
 
 // ORDER & PAYMENT
 model Order {
-    id            String   @id @default(uuid())               // Khóa chính
-    userId        String                                        // Mã người dùng (User) đã tạo đơn hàng
+    id            String   @id @default(uuid())             // Khóa chính
+    userId        String                                    // Mã người dùng (User) đã tạo đơn hàng
     totalAmount   Float                                     // Tổng tiền của đơn hàng
-    createdAt     DateTime @default(now())                   // Thời gian tạo đơn hàng
+    createdAt     DateTime @default(now())                  // Thời gian tạo đơn hàng
     
     // Quan hệ với User: Mỗi đơn hàng thuộc về một người dùng
     user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -274,10 +277,10 @@ model Notification {
 // FILE MANAGEMENT
 model File {
     id        String   @id @default(uuid())              // Khóa chính
-    projectId  String                                       // Mã dự án (Project) mà tệp này thuộc về
+    projectId  String                                    // Mã dự án (Project) mà tệp này thuộc về
     filename   String                                    // Tên tệp
     fileType   String                                    // Loại tệp (ví dụ: "image/png", "application/pdf")
-    size       String                                       // Kích thước tệp (bytes)
+    size       String                                    // Kích thước tệp (bytes)
     url        String                                    // Đường dẫn tới tệp
     uploadedAt DateTime @default(now())                  // Thời gian tải tệp lên
    
