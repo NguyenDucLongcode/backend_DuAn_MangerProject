@@ -23,6 +23,10 @@ import {
   GroupDevIDCache,
   GroupDevIDCacheSchema,
 } from '@/common/schemas/groupDev/groupDev-findOne-cache.schema';
+import {
+  deleteImageFromCloudinary,
+  uploadImageToCloudinary,
+} from '@/common/utils/cloudinary.utils';
 
 @Injectable()
 export class GroupDevService {
@@ -30,7 +34,10 @@ export class GroupDevService {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {}
-  async createGroupDev(createGroupDevDto: CreateGroupDevDto) {
+  async createGroupDev(
+    createGroupDevDto: CreateGroupDevDto,
+    file?: MulterFile,
+  ) {
     // Check name group exists in database
     const existsNameGroup = await this.prisma.groupDev.findFirst({
       where: {
@@ -39,9 +46,29 @@ export class GroupDevService {
     });
     if (existsNameGroup) throw new ConflictException('Name already exists');
 
+    // Upload ảnh nếu có
+    let resultCloudinary: { secure_url: string; public_id: string } | undefined;
+
+    if (file?.buffer) {
+      resultCloudinary = await uploadImageToCloudinary(file.buffer, 'groups');
+    }
+
     // Query DB
     const groupDev = await this.prisma.groupDev.create({
-      data: { ...createGroupDevDto },
+      data: {
+        ...createGroupDevDto,
+        avatar_url: resultCloudinary?.secure_url,
+        avatar_public_id: resultCloudinary?.public_id,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        visibility: true,
+        maxMembers: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     //delete key
@@ -167,7 +194,11 @@ export class GroupDevService {
     return result;
   }
 
-  async updateGroupDev(id: string, updateGroupDevDto: UpdateGroupDevDto) {
+  async updateGroupDev(
+    id: string,
+    updateGroupDevDto: UpdateGroupDevDto,
+    file?: MulterFile,
+  ) {
     const { name, description, visibility, maxMembers } = updateGroupDevDto;
     // check group Dev exists by id
     const groupDev = await this.prisma.groupDev.findUnique({ where: { id } });
@@ -177,10 +208,37 @@ export class GroupDevService {
       );
     }
 
+    // Upload ảnh nếu có
+    let resultCloudinary: { secure_url: string; public_id: string } | undefined;
+
+    if (file?.buffer) {
+      const result = await uploadImageToCloudinary(file.buffer, 'groups');
+      if (result) {
+        // Xóa ảnh cũ sau khi có ảnh mới
+        if (groupDev.avatar_public_id) {
+          await deleteImageFromCloudinary(groupDev.avatar_public_id);
+        }
+        resultCloudinary = result;
+      }
+    }
+
     // update information group dev
     const updatedGroupDev = await this.prisma.groupDev.update({
       where: { id },
-      data: updateGroupDevDto,
+      data: {
+        ...updateGroupDevDto,
+        avatar_url: resultCloudinary?.secure_url,
+        avatar_public_id: resultCloudinary?.public_id,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        visibility: true,
+        maxMembers: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     // delete all  keys cache
@@ -205,6 +263,11 @@ export class GroupDevService {
       );
     }
 
+    // delete file on cloudnary
+    if (groupDev.avatar_public_id) {
+      await deleteImageFromCloudinary(groupDev.avatar_public_id);
+    }
+
     // delete group Dev
     await this.prisma.groupDev.delete({ where: { id } });
 
@@ -215,7 +278,6 @@ export class GroupDevService {
     // Return seccessfull result
     return {
       message: 'Delete group dev successfully',
-      groupDev,
     };
   }
 }

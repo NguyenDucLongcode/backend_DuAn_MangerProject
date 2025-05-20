@@ -115,7 +115,8 @@ model GroupDev {
     description   String?                                    // Mô tả nhóm (tuỳ chọn)
     visibility    GroupVisibilityEnum @default(PRIVATE)      // Chế độ hiển thị nhóm (private, public, restricted)
     maxMembers    Int?                                       // Số lượng thành viên tối đa (tuỳ chọn)
-    image         String?                                    // Ảnh đại diện cho nhóm 
+    avatar_url     String?                                   // avatar group 
+    avatar_public_id  String?                                // public_id( dùng để xóa ảnh)  
     createdAt     DateTime @default(now())                   // Thời gian nhóm được tạo
     
     // Quan hệ với các lãnh đạo nhóm (GroupLeader)
@@ -210,6 +211,8 @@ model Project {
     id           String   @id @default(uuid())                // Khóa chính
     groupId      String                                         // Mã nhóm (GroupDev) mà dự án thuộc về
     name         String                                      // Tên dự án
+    avatar_url     String?                                   // avatar group 
+    avatar_public_id  String?                                // public_id( dùng để xóa ảnh)  
     description  String?                                    // Mô tả dự án
     createdAt    DateTime @default(now())                    // Thời gian tạo dự án
     
@@ -282,6 +285,7 @@ model File {
     fileType   String                                    // Loại tệp (ví dụ: "image/png", "application/pdf")
     size       String                                    // Kích thước tệp (bytes)
     url        String                                    // Đường dẫn tới tệp
+    url_public_id  String?                               // public_id( dùng để xóa file)  
     uploadedAt DateTime @default(now())                  // Thời gian tải tệp lên
    
     // Quan hệ với Project: Mỗi tệp thuộc về một dự án

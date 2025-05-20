@@ -17,6 +17,11 @@ import {
   ProjectPaginationCache,
   ProjectPaginationCacheSchema,
 } from '@/common/schemas/Project/project-pagination-cache.schema';
+import {
+  deleteCloudinaryFileByMime,
+  deleteImageFromCloudinary,
+  uploadImageToCloudinary,
+} from '@/common/utils/cloudinary.utils';
 
 @Injectable()
 export class ProjectsService {
@@ -24,7 +29,7 @@ export class ProjectsService {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {}
-  async createProjet(createProjectDto: CreateProjectDto) {
+  async createProjet(createProjectDto: CreateProjectDto, file?: MulterFile) {
     const { groupId, name } = createProjectDto;
     // check group dev is exits
     const exitsGroupDev = await this.prisma.groupDev.findFirst({
@@ -48,8 +53,19 @@ export class ProjectsService {
       );
     }
 
+    // Upload ảnh nếu có
+    let resultCloudinary: { secure_url: string; public_id: string } | undefined;
+
+    if (file?.buffer) {
+      resultCloudinary = await uploadImageToCloudinary(file.buffer, 'projects');
+    }
+
     const project = await this.prisma.project.create({
-      data: { ...createProjectDto },
+      data: {
+        ...createProjectDto,
+        avatar_url: resultCloudinary?.secure_url,
+        avatar_public_id: resultCloudinary?.public_id,
+      },
     });
 
     //delete key
@@ -169,16 +185,34 @@ export class ProjectsService {
     return result;
   }
 
-  async updateProject(id: string, updateProjectDto: UpdateProjectDto) {
+  async updateProject(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+    file?: MulterFile,
+  ) {
     //check exits Project
-    const existingProject = await this.prisma.project.findUnique({
+    const project = await this.prisma.project.findUnique({
       where: { id },
     });
 
-    if (!existingProject) {
+    if (!project) {
       throw new NotFoundException(
         `Cannot update. Project with id ${id} not found`,
       );
+    }
+
+    // Upload ảnh nếu có
+    let resultCloudinary: { secure_url: string; public_id: string } | undefined;
+
+    if (file?.buffer) {
+      const result = await uploadImageToCloudinary(file.buffer, 'projects');
+      if (result) {
+        // Xóa ảnh cũ sau khi có ảnh mới
+        if (project.avatar_public_id) {
+          await deleteImageFromCloudinary(project.avatar_public_id);
+        }
+        resultCloudinary = result;
+      }
     }
 
     // Query DB
@@ -186,6 +220,8 @@ export class ProjectsService {
       where: { id },
       data: {
         ...updateProjectDto,
+        avatar_url: resultCloudinary?.secure_url,
+        avatar_public_id: resultCloudinary?.public_id,
       },
     });
 
@@ -201,14 +237,19 @@ export class ProjectsService {
 
   async removeProjectDev(id: string) {
     // check exits Project
-    const existingProject = await this.prisma.project.findUnique({
+    const project = await this.prisma.project.findUnique({
       where: { id },
     });
 
-    if (!existingProject) {
+    if (!project) {
       throw new NotFoundException(
         `Cannot delete. Project with id ${id} not found`,
       );
+    }
+
+    // delete file on cloudnary
+    if (project.avatar_public_id) {
+      await deleteImageFromCloudinary(project.avatar_public_id);
     }
 
     // Query DB
@@ -216,9 +257,43 @@ export class ProjectsService {
       where: { id },
     });
 
+    // Delete file on table file in database
+    // Find files of project
+    const files = await this.prisma.file.findMany({
+      where: { projectId: id },
+    });
+
+    // Delete on cloudnary
+    if (files.length > 0) {
+      await Promise.allSettled(
+        files.map(async (file) => {
+          if (!file.url_public_id) return;
+
+          try {
+            const wasDeleted = await deleteCloudinaryFileByMime(
+              file.url_public_id,
+              file.fileType,
+            );
+
+            if (!wasDeleted) {
+              console.warn(
+                `Failed to delete file ${file.filename} on Cloudinary`,
+              );
+            }
+          } catch (error) {
+            console.error(`Error deleting file ${file.filename}:`, error);
+          }
+        }),
+      );
+    }
+
+    //Query DB
+    await this.prisma.file.deleteMany({ where: { projectId: id } });
+
     //delete key
     await this.redisService.delByPattern('project:pagination:*');
     await this.redisService.del(`project:findOne:id=${id}`);
+    await this.redisService.delByPattern('files:pagination*');
 
     return {
       message: 'Project deleted successfully',

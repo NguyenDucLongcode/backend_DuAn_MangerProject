@@ -1,5 +1,5 @@
 declare global {
-  interface MulterFile {
+  export interface MulterFile {
     fieldname: string;
     originalname: string;
     encoding: string;

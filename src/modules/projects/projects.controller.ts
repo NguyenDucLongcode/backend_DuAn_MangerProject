@@ -6,6 +6,8 @@ import {
   Patch,
   Delete,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 
@@ -15,14 +17,25 @@ import {
   UpdateProjectDto,
   PaginationProjectDto,
 } from './dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { imageFileAvatarFilter } from '@/cloudinary/filter/filter.user.avatar';
 
 @Controller('projects')
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post('create')
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.createProjet(createProjectDto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { files: 1 },
+      fileFilter: imageFileAvatarFilter,
+    }),
+  )
+  create(
+    @Body() createProjectDto: CreateProjectDto,
+    @UploadedFile() file?: MulterFile,
+  ) {
+    return this.projectsService.createProjet(createProjectDto, file);
   }
 
   @Get('pagination')
@@ -36,8 +49,18 @@ export class ProjectsController {
   }
 
   @Patch('update')
-  update(@Query('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.updateProject(id, updateProjectDto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { files: 1 },
+      fileFilter: imageFileAvatarFilter,
+    }),
+  )
+  update(
+    @Query('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+    @UploadedFile() file?: MulterFile,
+  ) {
+    return this.projectsService.updateProject(id, updateProjectDto, file);
   }
 
   @Delete('delete')
