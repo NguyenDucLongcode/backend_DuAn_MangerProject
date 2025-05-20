@@ -17,6 +17,7 @@ import { CreateUserDto, PaginationDto, UpdateUserDto } from './dto';
 // multer
 import { FileInterceptor } from '@nestjs/platform-express';
 import { imageFileAvatarFilter } from '@/cloudinary/filter/filter.user.avatar';
+import { MulterFile } from '@/types/multer-file';
 
 @Controller('users')
 export class UsersController {

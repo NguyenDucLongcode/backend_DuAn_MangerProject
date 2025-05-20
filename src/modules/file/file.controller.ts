@@ -12,6 +12,7 @@ import { FileService } from './file.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { PaginationDto } from './dto/pagination-file.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { MulterFile } from '@/types/multer-file';
 
 @Controller('file')
 export class FileController {

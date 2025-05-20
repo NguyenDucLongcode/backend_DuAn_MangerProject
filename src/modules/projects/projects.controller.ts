@@ -19,6 +19,7 @@ import {
 } from './dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { imageFileAvatarFilter } from '@/cloudinary/filter/filter.user.avatar';
+import { MulterFile } from '@/types/multer-file';
 
 @Controller('projects')
 export class ProjectsController {

@@ -19,6 +19,7 @@ import {
   FilePaginationCache,
   FilePaginationCacheSchema,
 } from '@/common/schemas/file/file-pagination-cache.schema';
+import { MulterFile } from '@/types/multer-file';
 
 @Injectable()
 export class FileService {

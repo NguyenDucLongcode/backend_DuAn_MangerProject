@@ -1,3 +1,4 @@
+import { MulterFile } from '@/types/multer-file';
 import { BadRequestException } from '@nestjs/common';
 import { Request } from 'express';
 

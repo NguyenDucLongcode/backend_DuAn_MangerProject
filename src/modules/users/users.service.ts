@@ -25,6 +25,7 @@ import {
   UserIDCache,
   UserIDCacheSchema,
 } from '@/common/schemas/user/user-findOne-cache.schema';
+import { MulterFile } from '@/types/multer-file';
 
 @Injectable()
 export class UsersService {

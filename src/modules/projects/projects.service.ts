@@ -22,6 +22,7 @@ import {
   deleteImageFromCloudinary,
   uploadImageToCloudinary,
 } from '@/common/utils/cloudinary.utils';
+import { MulterFile } from '@/types/multer-file';
 
 @Injectable()
 export class ProjectsService {

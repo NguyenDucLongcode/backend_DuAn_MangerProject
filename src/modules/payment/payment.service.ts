@@ -11,12 +11,14 @@ import {
   PaymentIDCache,
   PaymentIDCacheSchema,
 } from '@/common/schemas/order_payment/payment-findOne-cache.schema';
+import { PaymentGatewayService } from './gateway/payment.gateway.service';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
+    private readonly paymentGatewayService: PaymentGatewayService,
   ) {}
   async createPaymet(createPaymentDto: CreatePaymentDto) {
     // check payment exists in DB
@@ -37,9 +39,24 @@ export class PaymentService {
       );
     }
 
+    if ((createPaymentDto.amount = existOrder.totalAmount)) {
+      createPaymentDto.status = 'COMPLETED';
+    }
+
     // create in DB
     const payment = await this.prisma.payment.create({
       data: createPaymentDto,
+    });
+
+    // Gửi thông báo qua WebSocket đến user
+    await this.paymentGatewayService.sendNotification(existOrder.userId, {
+      type: 'payment:create',
+      orderId: existOrder.id,
+      paymentId: payment.id,
+      status: payment.status,
+      amount: payment.amount,
+      method: payment.method,
+      timestamp: new Date().toISOString(),
     });
 
     return {
@@ -98,6 +115,10 @@ export class PaymentService {
       );
     }
 
+    if (existingPayment.status === 'COMPLETED') {
+      throw new ConflictException(`The bill has been paid.`);
+    }
+
     // get order by Id
     const order = await this.prisma.order.findUnique({
       where: { id: existingPayment.orderId },
@@ -123,6 +144,19 @@ export class PaymentService {
         status: updatedStatus,
       },
     });
+
+    // Emit WebSocket thông báo thanh toán tới user
+    if (order) {
+      await this.paymentGatewayService.sendNotification(order.userId, {
+        type: 'payment:update',
+        orderId: order.id,
+        paymentId: id,
+        status: updatedStatus,
+        amount,
+        method,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     //delete key
     await this.redisService.del(`payment:findOne:id=${id}`);
