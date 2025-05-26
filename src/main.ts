@@ -5,11 +5,14 @@ import { validationPipeConfig } from './configs/validation.pipe.config'; // conf
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from './redis/RedisIoAdapter';
+import * as dotenv from 'dotenv';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug'],
   });
+
+  dotenv.config();
 
   // add prefix minus "\"
   app.setGlobalPrefix('api/v1', {

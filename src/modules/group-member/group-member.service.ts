@@ -28,8 +28,8 @@ export class GroupMemberService {
     }
 
     // Check if user is Leader
-    if (user.role === 'LEADER') {
-      throw new ConflictException('Leader cannot join as a member');
+    if (user.role !== 'CODER') {
+      throw new ConflictException('Only coder join as a member');
     }
 
     // Check if group dev exists
@@ -103,6 +103,7 @@ export class GroupMemberService {
             address: true,
             gender: true,
             role: true,
+            avatar_url: true,
             isActive: true,
             createdAt: true,
           },

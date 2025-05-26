@@ -9,7 +9,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 
 import { PrismaModule } from './prisma/prisma.module'; // primas module
-import { ThrottlerModule, ThrottlerGuard, seconds } from '@nestjs/throttler'; // rate limiting
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'; // rate limiting
 import { LoggingMiddleware } from '@/common/Middlewares/LoggingMiddleware'; // logger
 import { CoreModule } from './modules/core/core.module'; // total module
 import { JwtAuthGuard } from './modules/auth/passport/jwt-auth.guard'; // jwtAuthGuard
@@ -24,15 +24,18 @@ import { AllExceptionsFilter } from './common/http-exception/catch-everything.fi
 import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // use ConfigModule global  everywhere in application
-      envFilePath: `.env.${process.env.NODE_ENV}`, // Choose file .env follow NODE_ENV
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`, // Choose file .env follow NODE_ENV
     }),
 
     RedisModule, // catche
+
+    PrometheusModule.register(), // Monitoring (CPU/RAM)
 
     // cron job
     CronJobsModule,
@@ -46,7 +49,9 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
         },
       ],
       // default config (host = localhost, port = 6379)
-      storage: new ThrottlerStorageRedisService(),
+      storage: new ThrottlerStorageRedisService(
+        process.env.REDIS_URL || 'redis://localhost:6379',
+      ),
 
       getTracker: (req: Record<string, any>, _context: ExecutionContext) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

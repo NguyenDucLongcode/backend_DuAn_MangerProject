@@ -6,6 +6,7 @@ export const GroupDevPaginationItemSchema = z.object({
   description: z.string(),
   visibility: z.string(),
   maxMembers: z.number(),
+  avatar_url: z.string().nullable(),
   createdAt: z.string(),
 });
 

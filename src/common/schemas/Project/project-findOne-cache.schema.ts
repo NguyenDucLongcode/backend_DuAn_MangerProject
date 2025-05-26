@@ -5,6 +5,7 @@ export const ProjectIDItemSchema = z.object({
   name: z.string(),
   description: z.string(),
   groupId: z.string(),
+  avatar_url: z.string().nullable(),
   createdAt: z.string(),
 });
 

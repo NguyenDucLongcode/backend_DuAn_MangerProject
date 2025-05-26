@@ -21,7 +21,7 @@ export class PaymentService {
     private readonly paymentGatewayService: PaymentGatewayService,
   ) {}
   async createPaymet(createPaymentDto: CreatePaymentDto) {
-    // check payment exists in DB
+    // check order exists in DB
     const existOrder = await this.prisma.order.findUnique({
       where: { id: createPaymentDto.orderId },
     });
@@ -30,6 +30,15 @@ export class PaymentService {
       throw new NotFoundException(
         `Payment not found, please chose orderId different`,
       );
+    }
+
+    // Check payment exits in DB
+    const existPayment = await this.prisma.payment.findUnique({
+      where: { orderId: createPaymentDto.orderId },
+    });
+
+    if (existPayment) {
+      throw new NotFoundException(`Each bill can only be paid once.`);
     }
 
     //check amount <= totalAmount

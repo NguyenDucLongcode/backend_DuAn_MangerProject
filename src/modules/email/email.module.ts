@@ -2,12 +2,15 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailService } from './email.service';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 const templateDir =
   process.env.NODE_ENV === 'production'
-    ? join(__dirname, '..', 'templates', 'email-templates') // khi chạy dist
-    : join(process.cwd(), 'src', 'templates', 'email-templates'); // khi chạy ts-node
+    ? resolve(process.cwd(), 'dist', 'templates', 'email-templates') // khi chạy dist
+    : resolve(process.cwd(), 'src', 'templates', 'email-templates'); // khi chạy ts-node
+
+console.log('chek env', process.env.NODE_ENV);
+console.log('Template directory:', templateDir);
 @Module({
   imports: [
     MailerModule.forRoot({

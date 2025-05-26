@@ -2,12 +2,13 @@ import { z } from 'zod';
 
 export const ListMembersItemSchema = z.object({
   id: z.string(),
-  name: z.string().nullable(),
+  name: z.string(),
   email: z.string(),
-  phone: z.string().nullable(),
+  phone: z.string(),
   address: z.string().nullable(),
   gender: z.string().nullable(),
   role: z.string(),
+  avatar_url: z.string().nullable(),
   isActive: z.boolean(),
   createdAt: z.string(),
 });

@@ -13,6 +13,7 @@ import { ChatModule } from '../chat/chat.module';
 import { OrderModule } from '../order/order.module';
 import { PaymentModule } from '../payment/payment.module';
 import { FileModule } from '../file/file.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { FileModule } from '../file/file.module';
     OrderModule,
     PaymentModule,
     FileModule,
+    EmailModule,
   ], // Import các module cần thiết vào đây
   exports: [
     AuthModule,
@@ -46,6 +48,7 @@ import { FileModule } from '../file/file.module';
     OrderModule,
     PaymentModule,
     FileModule,
+    EmailModule,
   ], // Export lại các module này để có thể sử dụng ở nơi khác
 })
 export class CoreModule {}

@@ -136,6 +136,15 @@ export class GroupDevService {
       orderBy: {
         createdAt: 'desc',
       },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        visibility: true,
+        maxMembers: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     // totalPages
@@ -162,6 +171,15 @@ export class GroupDevService {
     // check group dev exists by id
     const existingGroupDev = await this.prisma.groupDev.findUnique({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        visibility: true,
+        maxMembers: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     if (!existingGroupDev) {

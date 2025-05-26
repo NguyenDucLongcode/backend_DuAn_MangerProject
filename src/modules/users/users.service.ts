@@ -162,6 +162,7 @@ export class UsersService {
         gender: true,
         role: true,
         isActive: true,
+        avatar_url: true,
         createdAt: true,
       },
     });
@@ -191,6 +192,18 @@ export class UsersService {
     // check user exists by id
     const existingUser = await this.prisma.user.findUnique({
       where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        address: true,
+        gender: true,
+        role: true,
+        isActive: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     if (!existingUser) {
@@ -214,7 +227,7 @@ export class UsersService {
 
     const result = {
       message: 'Get user by id successfully',
-      user: removePassword(existingUser),
+      user: existingUser,
     };
 
     await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
@@ -300,7 +313,21 @@ export class UsersService {
     }
 
     // delete user
-    await this.prisma.user.delete({ where: { id } });
+    const result = await this.prisma.user.delete({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        address: true,
+        gender: true,
+        role: true,
+        isActive: true,
+        avatar_url: true,
+        createdAt: true,
+      },
+    });
 
     // delete file on cloudnary
     if (user.avatar_public_id) {
@@ -314,7 +341,7 @@ export class UsersService {
     // Return seccessfull result
     return {
       message: 'Delete user successfully',
-      user: removePassword(user),
+      user: result,
     };
   }
 

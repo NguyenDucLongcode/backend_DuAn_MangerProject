@@ -67,6 +67,14 @@ export class ProjectsService {
         avatar_url: resultCloudinary?.secure_url,
         avatar_public_id: resultCloudinary?.public_id,
       },
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        description: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     //delete key
@@ -129,6 +137,14 @@ export class ProjectsService {
       orderBy: {
         createdAt: 'desc',
       },
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        description: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     // totalPages
@@ -155,6 +171,14 @@ export class ProjectsService {
     //chgeck exits Project
     const exitsProject = await this.prisma.project.findUnique({
       where: { id },
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        description: true,
+        avatar_url: true,
+        createdAt: true,
+      },
     });
 
     if (!exitsProject) {
@@ -223,6 +247,14 @@ export class ProjectsService {
         ...updateProjectDto,
         avatar_url: resultCloudinary?.secure_url,
         avatar_public_id: resultCloudinary?.public_id,
+      },
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        description: true,
+        avatar_url: true,
+        createdAt: true,
       },
     });
 

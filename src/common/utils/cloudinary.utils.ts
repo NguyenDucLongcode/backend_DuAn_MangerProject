@@ -45,7 +45,7 @@ export const deleteImageFromCloudinary = async (
 ): Promise<boolean> => {
   try {
     const result = (await cloudinary.uploader.destroy(publicId, {
-      resource_type: 'raw',
+      resource_type: 'image',
     })) as {
       result: string;
     };

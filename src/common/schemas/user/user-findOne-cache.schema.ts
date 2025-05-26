@@ -9,6 +9,7 @@ export const UserIDItemSchema = z.object({
   gender: z.string().nullable(),
   role: z.string(),
   isActive: z.boolean(),
+  avatar_url: z.string(),
   createdAt: z.string(),
 });
 
