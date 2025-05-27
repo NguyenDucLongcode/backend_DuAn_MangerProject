@@ -12,9 +12,11 @@ import { EmailModule } from '../email/email.module';
 import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { TokenUtil } from '@/common/utils/token.utils';
+import { MetricsModule } from '@/metrics/metrics.module';
 
 @Module({
   imports: [
+    MetricsModule,
     EmailModule,
     PassportModule,
     UsersModule,

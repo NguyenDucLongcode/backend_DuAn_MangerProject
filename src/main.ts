@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { RedisIoAdapter } from './redis/RedisIoAdapter';
 import * as dotenv from 'dotenv';
+import { prometheusMiddleware } from './metrics/prometheus.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -14,9 +15,9 @@ async function bootstrap() {
 
   dotenv.config();
 
-  // add prefix minus "\"
-  app.setGlobalPrefix('api/v1', {
-    exclude: ['/'], // Home page without prefix
+  const apiPrefix = process.env.VERSION_API ?? 'api/v1';
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: ['/'],
   });
 
   app.useGlobalPipes(validationPipeConfig); // config ValidationPipe data request
@@ -28,6 +29,7 @@ async function bootstrap() {
   });
 
   app.use(cookieParser()); // config cookie
+  app.use(prometheusMiddleware); // middlewave prometheus
 
   // config halmet
   app.use(

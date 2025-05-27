@@ -7,6 +7,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IVerifyOptions } from 'passport-local';
 import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -14,15 +15,25 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
   canActivate(context: ExecutionContext) {
+    const req: Request = context.switchToHttp().getRequest();
+    const url = req.originalUrl;
     // Add your custom authentication logic here
     // for example, call super.logIn(request) to establish a session.
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
+
     if (isPublic) {
       return true;
     }
+
+    // Nếu request tới /api/v1/metrics thì bỏ qua auth
+    const apiPrefix = process.env.VERSION_API ?? 'api/v1';
+    if (url.startsWith(`/${apiPrefix}/metrics`)) {
+      return true;
+    }
+
     return super.canActivate(context);
   }
 

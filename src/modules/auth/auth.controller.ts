@@ -17,10 +17,14 @@ import { Public } from '@/common/decorators/public.decorator';
 
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot-password.dto';
+import { MetricsService } from '@/metrics/metrics.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private metricsService: MetricsService,
+  ) {}
 
   @Post('login')
   @Public()
@@ -30,6 +34,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Headers('x-device-id') deviceId: string,
   ) {
+    this.metricsService.incLogin(deviceId);
     return this.authService.login(req.user, res, deviceId);
   }
 
