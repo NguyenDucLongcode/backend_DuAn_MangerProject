@@ -236,4 +236,14 @@ export class OrderService {
       message: 'Order deleted successfully',
     };
   }
+
+  async isOrderOfUser(orderId: string, userId: string) {
+    const existingorder = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        userId,
+      },
+    });
+    return !!existingorder; // true nếu là leader
+  }
 }

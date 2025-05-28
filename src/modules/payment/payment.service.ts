@@ -199,4 +199,29 @@ export class PaymentService {
       message: 'Payment deleted successfully',
     };
   }
+
+  async isPaymentOfUser(paymentId: string, userId: string) {
+    //check exits payment
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment với id ${paymentId} không tồn tại`);
+    }
+
+    // check exits payment
+    const exitingOrder = await this.prisma.order.findFirst({
+      where: {
+        id: payment.orderId,
+        userId,
+      },
+    });
+
+    if (!exitingOrder) {
+      return false;
+    }
+
+    return !!exitingOrder; // trả về true nêu order là của user
+  }
 }

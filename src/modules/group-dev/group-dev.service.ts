@@ -299,4 +299,27 @@ export class GroupDevService {
       message: 'Delete group dev successfully',
     };
   }
+
+  async isUserInGroup(groupId: string, userId: string): Promise<boolean> {
+    const existingGroupDev = await this.prisma.groupMember.findFirst({
+      where: {
+        groupId,
+        userId,
+      },
+    });
+
+    return !!existingGroupDev; // true nếu là thành viên
+  }
+
+  async isLeaderInGroup(groupId: string, userId: string) {
+    // check group dev exists by id
+    const existingGroupDev = await this.prisma.groupLeader.findFirst({
+      where: {
+        groupId,
+        userId,
+      },
+    });
+
+    return !!existingGroupDev; // true nếu là leader
+  }
 }

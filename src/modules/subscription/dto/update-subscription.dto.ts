@@ -10,6 +10,11 @@ import { SubscriptionPlan } from '@prisma/client';
 import { toEmptyStringAsUndefined } from '@/common/utils/transform.dto';
 
 export class UpdateSubscriptionDto {
+  // validate userId
+  @IsNotEmpty({ message: 'userId không được để trống' })
+  @toEmptyStringAsUndefined()
+  userId!: SubscriptionPlan;
+
   // validate plan
   @IsNotEmpty({ message: 'plan không được để trống' })
   @toEmptyStringAsUndefined()

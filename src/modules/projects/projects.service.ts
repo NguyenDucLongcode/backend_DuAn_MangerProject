@@ -23,6 +23,7 @@ import {
   uploadImageToCloudinary,
 } from '@/common/utils/cloudinary.utils';
 import { MulterFile } from '@/types/multer-file';
+import { Role } from '@/enums/role.enum';
 
 @Injectable()
 export class ProjectsService {
@@ -331,5 +332,42 @@ export class ProjectsService {
     return {
       message: 'Project deleted successfully',
     };
+  }
+
+  async verifyUserAccessToProjectId(
+    projectId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const [user, project] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId } }),
+      this.prisma.project.findUnique({ where: { id: projectId } }),
+    ]);
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    if (!project) {
+      throw new NotFoundException(`Project with id ${projectId} not found`);
+    }
+
+    if (user.role === Role.ADMIN) return true;
+
+    const groupWhere = {
+      groupId: project.groupId,
+      userId,
+    };
+
+    if (user.role === Role.LEADER) {
+      const leader = await this.prisma.groupLeader.findFirst({
+        where: groupWhere,
+      });
+      return !!leader;
+    }
+
+    const member = await this.prisma.groupMember.findFirst({
+      where: groupWhere,
+    });
+    return !!member;
   }
 }

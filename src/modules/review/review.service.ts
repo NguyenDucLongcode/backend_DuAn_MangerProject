@@ -242,4 +242,17 @@ export class ReviewService {
       message: 'Review deleted successfully',
     };
   }
+
+  async isReviewOfUser(reviewId: string, userId: string) {
+    //check exits Review
+    const exitsReview = await this.prisma.review.findFirst({
+      where: { id: reviewId, userId },
+    });
+
+    if (!exitsReview) {
+      throw new NotFoundException(`Review với id ${reviewId} không tồn tại`);
+    }
+
+    return !!exitsReview; // trả ra trư nêu ra kết quả
+  }
 }

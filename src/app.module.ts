@@ -25,6 +25,7 @@ import { TransformResponseInterceptor } from './common/interceptors/transform-re
 
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -82,6 +83,10 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // project api point global
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard, // sau đó kiểm tra vai trò
     },
     {
       provide: APP_FILTER,

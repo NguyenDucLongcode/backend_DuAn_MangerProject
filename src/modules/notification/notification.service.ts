@@ -280,4 +280,15 @@ export class NotificationService {
       message: 'Notification deleted successfully',
     };
   }
+
+  async isNotificationOfUser(notificationId: string, userId: string) {
+    const existingNotification = await this.prisma.notification.findFirst({
+      where: {
+        id: notificationId,
+        userId,
+      },
+    });
+
+    return !!existingNotification; // true nếu tồn tại
+  }
 }

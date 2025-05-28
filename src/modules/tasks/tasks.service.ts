@@ -249,4 +249,16 @@ export class TasksService {
       message: 'Project deleted successfully',
     };
   }
+
+  async isTaskAssignedToUser(taskId: string, userId: string): Promise<boolean> {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with id ${taskId} not found`);
+    }
+
+    return task.assignedTo === userId;
+  }
 }

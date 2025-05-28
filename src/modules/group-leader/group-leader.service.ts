@@ -197,4 +197,16 @@ export class GroupLeaderService {
       message: 'Remove leader successfully',
     };
   }
+
+  async isLeaderInGroup(groupId: string, userId: string) {
+    // check group dev exists by id
+    const existingGroupDev = await this.prisma.groupLeader.findFirst({
+      where: {
+        groupId,
+        userId,
+      },
+    });
+
+    return !!existingGroupDev; // true nếu là leader
+  }
 }

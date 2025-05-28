@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -134,6 +135,16 @@ export class GroupMemberService {
       throw new NotFoundException('User is not a member of this group');
     }
 
+    const isLeader = await this.isLeaderInGroup(groupId, userId);
+    if (isLeader) {
+      const leaderCount = await this.countLeaders(groupId);
+      if (leaderCount <= 1) {
+        throw new BadRequestException(
+          'Không thể xóa vì dây là leader duy nhất',
+        );
+      }
+    }
+
     //delete key
     await this.redisService.delByPattern(
       'groupMember:listMembersByGroup:groupId=*',
@@ -145,5 +156,34 @@ export class GroupMemberService {
     });
 
     return { message: 'User left group successfully' };
+  }
+
+  async isUserInGroup(groupId: string, userId: string): Promise<boolean> {
+    const existingGroupDev = await this.prisma.groupMember.findFirst({
+      where: {
+        groupId,
+        userId,
+      },
+    });
+
+    return !!existingGroupDev; // true nếu là thành viên
+  }
+
+  async isLeaderInGroup(groupId: string, userId: string) {
+    // check group dev exists by id
+    const existingGroupDev = await this.prisma.groupLeader.findFirst({
+      where: {
+        groupId,
+        userId,
+      },
+    });
+
+    return !!existingGroupDev; // true nếu là leader
+  }
+
+  async countLeaders(groupId: string): Promise<number> {
+    return this.prisma.groupLeader.count({
+      where: { groupId },
+    });
   }
 }

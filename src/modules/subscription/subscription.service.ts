@@ -249,4 +249,16 @@ export class SubscriptionService {
       message: 'Subscription deleted successfully',
     };
   }
+
+  async isSubscriptionOfUser(subsId: string, userId: string): Promise<boolean> {
+    const subs = await this.prisma.subscription.findUnique({
+      where: { id: subsId },
+    });
+
+    if (!subs) {
+      throw new NotFoundException(`Subscription with id ${subsId} not found`);
+    }
+
+    return subs.userId === userId;
+  }
 }
