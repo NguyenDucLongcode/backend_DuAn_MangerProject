@@ -24,7 +24,8 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { Role } from '@/enums/role.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtPayload } from '@/types/jwt-payload.interface';
-import { checkPermissionForUser } from '@/common/utils/role/auth-utils';
+import { checkPermission } from '@/common/utils/role/auth-utils';
+import { ChangeRoleUserDto } from './dto/changeRole-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -46,23 +47,22 @@ export class UsersController {
     return this.usersService.create(createUserDto, file);
   }
 
-  @Roles(Role.ADMIN, Role.LEADER)
+  @Roles(Role.ADMIN)
   @Get('pagination')
   Pagination(@Query() paginationDto: PaginationDto) {
     return this.usersService.Pagination(paginationDto);
   }
 
-  // @Roles(Role.ADMIN, Role.CODER, Role.CUSTOMER, Role.LEADER)
   @Get()
-  findOne(@Query('id') id: string, @CurrentUser() user: JwtPayload) {
+  async findOne(@Query('id') id: string, @CurrentUser() user: JwtPayload) {
     /**
      * Kiểm tra quyền truy cập với role và id
      * @param user Thông tin user hiện tại (jwt payload)
-     * @param targetId Id của đối tượng đang thao tác
      * @param allowedRoles Các role được phép thao tác không cần so sánh id
      * @param checkOwnUser Nếu true, user chỉ được thao tác với chính mình nếu không thuộc allowedRoles
      */
-    checkPermissionForUser(user, id, [Role.ADMIN, Role.LEADER], true);
+    const isUser = await this.usersService.findById(id);
+    checkPermission(user, isUser, [Role.ADMIN, Role.LEADER]);
 
     return this.usersService.findOne(id);
   }
@@ -75,21 +75,27 @@ export class UsersController {
       fileFilter: imageFileAvatarFilter,
     }),
   )
-  update(
+  async update(
     @Query('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: JwtPayload,
     @UploadedFile() file?: MulterFile,
   ) {
-    checkPermissionForUser(user, id, [Role.ADMIN, Role.LEADER], true);
-
+    // Kiểm tra quyền truy cập cho một user
+    const isOwnerOrMember = await this.usersService.findById(id);
+    checkPermission(user, isOwnerOrMember, [Role.ADMIN]);
     return this.usersService.update(id, updateUserDto, file);
   }
 
-  @Delete('delete')
-  remove(@Query('id') id: string, @CurrentUser() user: JwtPayload) {
-    checkPermissionForUser(user, id, [Role.ADMIN, Role.LEADER], true);
+  @Roles(Role.ADMIN)
+  @Patch('change-role')
+  changeUserRole(@Query('id') id: string, @Body() dto: ChangeRoleUserDto) {
+    return this.usersService.changeUserRole(id, dto);
+  }
 
+  @Roles(Role.ADMIN)
+  @Delete('delete')
+  remove(@Query('id') id: string) {
     return this.usersService.remove(id);
   }
 }

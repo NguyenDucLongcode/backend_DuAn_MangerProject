@@ -26,12 +26,4 @@ export class UpdateUserDto {
   @toEmptyStringAsUndefined()
   @IsEnum(['Nam', 'Nữ'], { message: 'Giới tính phải là Nam hoặc Nữ' })
   gender?: string;
-
-  // validRole
-  @IsOptional()
-  @toEmptyStringAsUndefined()
-  @IsEnum(UserRoleEnum, {
-    message: 'Vai trò phải là CUSTOMER, ADMIN, LEADER, CODER',
-  })
-  role?: UserRoleEnum;
 }

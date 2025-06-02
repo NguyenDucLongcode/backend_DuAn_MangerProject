@@ -26,6 +26,8 @@ import {
   UserIDCacheSchema,
 } from '@/common/schemas/user/user-findOne-cache.schema';
 import { MulterFile } from '@/types/multer-file';
+import { Role } from '@/enums/role.enum';
+import { ChangeRoleUserDto } from './dto/changeRole-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -237,7 +239,7 @@ export class UsersService {
 
   // update user
   async update(id: string, updateUserDto: UpdateUserDto, file?: MulterFile) {
-    const { name, phone, address, gender, role } = updateUserDto;
+    const { name, phone, address, gender } = updateUserDto;
 
     // check user exists by id
     const user = await this.prisma.user.findUnique({ where: { id } });
@@ -293,7 +295,7 @@ export class UsersService {
     });
 
     // delete key
-    if (name || phone || address || gender || role) {
+    if (name || phone || address || gender) {
       await this.redisService.delByPattern('users:pagination:*');
       await this.redisService.del(`users:findOne:id=${id}`);
     }
@@ -310,6 +312,10 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found, please choose another id');
+    }
+
+    if (user.role === 'ADMIN') {
+      throw new ConflictException('Cannot delete Admin');
     }
 
     // delete user
@@ -345,8 +351,35 @@ export class UsersService {
     };
   }
 
+  async changeUserRole(userId: string, changeRoleUserDto: ChangeRoleUserDto) {
+    // check user exists by id
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found, please choose another id');
+    }
+
+    // Update role
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: changeRoleUserDto.role },
+    });
+
+    return { message: 'Role updated successfully', user };
+  }
+
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email: email } });
+  }
+
+  async findById(userId: string) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    return !!existingUser; // true nếu là leader
   }
 
   async updatePassword(id: string, hashedPassword: string) {
