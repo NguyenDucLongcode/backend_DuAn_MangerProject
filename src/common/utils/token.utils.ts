@@ -91,4 +91,15 @@ export class TokenUtil {
   tokenForgotPasswordExpiresIn(): string {
     return FORGOT_PASSWORD_EXPIRES_IN || '15m';
   }
+
+  decodeAccessToken(token: string): { sub: string } {
+    try {
+      return this.jwtService.verify(token, {
+        secret: ACCESS_SECRET,
+      });
+    } catch (err) {
+      console.log(err);
+      throw new Error('Invalid or expired verification token');
+    }
+  }
 }

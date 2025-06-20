@@ -26,7 +26,6 @@ import {
   UserIDCacheSchema,
 } from '@/common/schemas/user/user-findOne-cache.schema';
 import { MulterFile } from '@/types/multer-file';
-import { Role } from '@/enums/role.enum';
 import { ChangeRoleUserDto } from './dto/changeRole-user.dto';
 
 @Injectable()
@@ -165,6 +164,7 @@ export class UsersService {
         role: true,
         isActive: true,
         avatar_url: true,
+        avatar_public_id: true,
         createdAt: true,
       },
     });
@@ -319,7 +319,7 @@ export class UsersService {
     }
 
     // delete user
-    const result = await this.prisma.user.delete({
+    await this.prisma.user.delete({
       where: { id },
       select: {
         id: true,
@@ -347,7 +347,6 @@ export class UsersService {
     // Return seccessfull result
     return {
       message: 'Delete user successfully',
-      user: result,
     };
   }
 
@@ -362,12 +361,16 @@ export class UsersService {
     }
 
     // Update role
-    const user = await this.prisma.user.update({
+    await this.prisma.user.update({
       where: { id: userId },
       data: { role: changeRoleUserDto.role },
     });
 
-    return { message: 'Role updated successfully', user };
+    // delete all 'users:pagination:*' keys cache
+    await this.redisService.delByPattern('users:pagination:*');
+    await this.redisService.del(`users:findOne:id=${userId}`);
+
+    return { message: 'Role updated successfully' };
   }
 
   async findByEmail(email: string) {

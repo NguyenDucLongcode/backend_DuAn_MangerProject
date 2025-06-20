@@ -10,6 +10,7 @@ export const UserPaginationItemSchema = z.object({
   role: z.string(),
   isActive: z.boolean(),
   avatar_url: z.string().nullable(),
+  avatar_public_id: z.string().nullable(),
   createdAt: z.string(),
 });
 

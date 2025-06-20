@@ -26,6 +26,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtPayload } from '@/types/jwt-payload.interface';
 import { checkPermission } from '@/common/utils/role/auth-utils';
 import { ChangeRoleUserDto } from './dto/changeRole-user.dto';
+import { Public } from '@/common/decorators/public.decorator';
 
 @Controller('users')
 export class UsersController {

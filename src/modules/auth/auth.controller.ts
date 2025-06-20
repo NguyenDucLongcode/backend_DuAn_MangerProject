@@ -87,4 +87,13 @@ export class AuthController {
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
   }
+
+  @Get('refresh_Account_User')
+  @Public()
+  async refreshAccountUser(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.accountUser(req, res);
+  }
 }

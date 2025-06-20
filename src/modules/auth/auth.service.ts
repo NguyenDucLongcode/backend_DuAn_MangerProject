@@ -48,7 +48,7 @@ export class AuthService {
   // Fuc Handler login User
   async login(user: User, res: Response, deviceId: string) {
     const isProduction = process.env.NODE_ENV === 'production';
-    const payload = { username: user.email, sub: user.id };
+    const payload = { username: user.email, sub: user.id, role: user.role };
 
     // Check if a refresh token has been revoked for this device
     const existingToken = await this.prisma.refreshToken.findUnique({
@@ -87,7 +87,16 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
 
+    // Set cookie
+    res.cookie('access_token', this.jwtService.sign(payload), {
+      httpOnly: true,
+      secure: isProduction, //  Chỉ bật secure khi production
+      sameSite: isProduction ? 'strict' : 'lax', // Tránh lỗi CORS trong dev
+      maxAge: 15 * 60 * 1000, // 15 phút
+    });
+
     return {
+      message: 'Login successfully',
       access_token: this.jwtService.sign(payload),
     };
   }
@@ -132,6 +141,13 @@ export class AuthService {
 
       // Delete cookie JWT token
       res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+      });
+
+      // Delete cookie JWT token
+      res.clearCookie('access_token', {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? 'strict' : 'lax',
@@ -276,7 +292,18 @@ export class AuthService {
         },
       });
 
-      return { access_token: newAccessToken };
+      // Set cookie
+      res.cookie('access_token', newAccessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'lax',
+        maxAge: 15 * 60 * 1000, // 15 phút
+      });
+
+      return {
+        message: 'refrefresh_token successfully',
+        access_token: newAccessToken,
+      };
     } catch (err) {
       if (err instanceof UnauthorizedException) {
         throw err; // Don't rethrow as InternalServerErrorException
@@ -407,5 +434,51 @@ export class AuthService {
     } catch (e) {
       throw new BadRequestException('Invalid or expired token');
     }
+  }
+
+  async accountUser(req: Request, res: Response) {
+    const cookies = req.cookies as { access_token?: string };
+    const access_token = cookies.access_token;
+
+    console.log('check token', access_token);
+
+    if (!access_token) {
+      return {
+        message: 'Not fount access token',
+        access_token: access_token,
+        user: {},
+      };
+    }
+
+    const payload = this.tokenUtil.decodeAccessToken(
+      access_token,
+    ) as JwtDecodedPayload;
+
+    // check user exists by id
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        address: true,
+        gender: true,
+        role: true,
+        isActive: true,
+        avatar_url: true,
+        createdAt: true,
+      },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('User not found, please choose another id');
+    }
+
+    return {
+      message: 'Get user detail successfully',
+      access_token: access_token,
+      user: existingUser,
+    };
   }
 }

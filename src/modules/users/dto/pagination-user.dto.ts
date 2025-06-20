@@ -4,9 +4,9 @@ import {
   Min,
   Max,
   IsString,
-  IsEmail,
   IsEnum,
   IsBoolean,
+  IsDateString,
 } from 'class-validator';
 
 import { UserRoleEnum } from '@prisma/client';
@@ -39,8 +39,7 @@ export class PaginationDto {
 
   // validEmail
   @IsOptional()
-  @toEmptyStringAsUndefined()
-  @IsEmail({}, { message: 'Email không hợp lệ' })
+  @IsString({ message: 'Email phải là 1 chuỗi' })
   email?: string;
 
   // validRole
@@ -59,10 +58,12 @@ export class PaginationDto {
   isActive?: boolean;
 
   @IsOptional()
-  @IsString({ message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
+  @toEmptyStringAsUndefined()
+  @IsDateString({}, { message: 'fromDate phải là chuỗi ngày hợp lệ (ISO)' })
   fromDate?: string;
 
   @IsOptional()
-  @IsString({ message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
+  @toEmptyStringAsUndefined()
+  @IsDateString({}, { message: 'toDate phải là chuỗi ngày hợp lệ (ISO)' })
   toDate?: string;
 }
