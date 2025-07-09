@@ -169,6 +169,30 @@ export class GroupDevService {
 
   async findOne(id: string) {
     // check group dev exists by id
+    const currentMembers = await this.prisma.groupMember.count({
+      where: { groupId: id },
+    });
+
+    const leaderInGroup = await this.prisma.groupLeader.findFirst({
+      where: { groupId: id },
+      select: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            address: true,
+            gender: true,
+            role: true,
+            avatar_url: true,
+            isActive: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
     const existingGroupDev = await this.prisma.groupDev.findUnique({
       where: { id },
       select: {
@@ -205,7 +229,11 @@ export class GroupDevService {
 
     const result = {
       message: 'Get group dev by id successfully',
-      groupDev: existingGroupDev,
+      groupDev: {
+        ...existingGroupDev,
+        currentMembers,
+        leader: leaderInGroup?.user ?? null,
+      },
     };
 
     await this.redisService.set(cacheKey, result, 1800); // cache trong 30 phút
@@ -321,5 +349,25 @@ export class GroupDevService {
     });
 
     return !!existingGroupDev; // true nếu là leader
+  }
+
+  async FindProjectByGroupId(groupId: string) {
+    const projects = await this.prisma.project.findMany({
+      where: { groupId },
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        avatar_url: true,
+        description: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      message: 'Get projects by groupId success',
+      projects: projects,
+      countProject: projects.length,
+    };
   }
 }

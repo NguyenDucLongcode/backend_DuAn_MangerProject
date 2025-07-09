@@ -145,6 +145,12 @@ export class ProjectsService {
         description: true,
         avatar_url: true,
         createdAt: true,
+        group: {
+          select: {
+            name: true,
+            maxMembers: true,
+          },
+        },
       },
     });
 
@@ -170,6 +176,7 @@ export class ProjectsService {
 
   async findProjectById(id: string) {
     //chgeck exits Project
+
     const exitsProject = await this.prisma.project.findUnique({
       where: { id },
       select: {

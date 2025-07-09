@@ -71,6 +71,7 @@ export class GroupLeaderService {
     await this.redisService.delByPattern(
       'groupLeader:findLeaderByGroup:groupId=*',
     );
+    await this.redisService.del(`groupDev:findOne:id=${groupId}`);
 
     // Return sussess result
     return {
@@ -166,6 +167,7 @@ export class GroupLeaderService {
     await this.redisService.delByPattern(
       'groupLeader:findLeaderByGroup:groupId=*',
     );
+    await this.redisService.del(`groupDev:findOne:id=${groupId}`);
 
     // Return seccessfull result
     return {
@@ -192,6 +194,7 @@ export class GroupLeaderService {
     await this.redisService.delByPattern(
       'groupLeader:findLeaderByGroup:groupId=*',
     );
+    await this.redisService.del(`groupDev:findOne:id=${groupId}`);
 
     return {
       message: 'Remove leader successfully',

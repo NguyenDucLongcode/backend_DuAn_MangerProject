@@ -125,6 +125,27 @@ export class SubscriptionService {
       orderBy: {
         createdAt: 'desc',
       },
+      select: {
+        id: true,
+        plan: true,
+        expiresAt: true,
+        price: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            phone: true,
+            address: true,
+            gender: true,
+            role: true,
+            isActive: true,
+            avatar_url: true,
+            createdAt: true,
+          },
+        },
+      },
     });
 
     // totalPages

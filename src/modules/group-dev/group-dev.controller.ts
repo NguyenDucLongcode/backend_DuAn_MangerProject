@@ -99,4 +99,14 @@ export class GroupDevController {
     checkPermission(user, isMember, [Role.ADMIN]);
     return this.groupDevService.removeGroupDev(id);
   }
+
+  @Get('findProject_GroupId')
+  async FindProjectByGroupId(
+    @Query('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    const isMember = await this.groupDevService.isUserInGroup(id, user.id);
+    checkPermission(user, isMember, [Role.ADMIN, Role.LEADER]);
+    return this.groupDevService.FindProjectByGroupId(id);
+  }
 }

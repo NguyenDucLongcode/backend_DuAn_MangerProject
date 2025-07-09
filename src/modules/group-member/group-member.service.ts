@@ -67,6 +67,7 @@ export class GroupMemberService {
     await this.redisService.delByPattern(
       'groupMember:listMembersByGroup:groupId=*',
     );
+    await this.redisService.del(`groupDev:findOne:id=${groupId}`);
 
     // add member
     await this.prisma.groupMember.create({
@@ -149,6 +150,7 @@ export class GroupMemberService {
     await this.redisService.delByPattern(
       'groupMember:listMembersByGroup:groupId=*',
     );
+    await this.redisService.del(`groupDev:findOne:id=${groupId}`);
 
     // delete member
     await this.prisma.groupMember.delete({

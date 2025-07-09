@@ -7,6 +7,10 @@ export const ProjectPaginationItemSchema = z.object({
   groupId: z.string(),
   avatar_url: z.string().nullable(),
   createdAt: z.string(),
+  group: z.object({
+    name: z.string(),
+    maxMembers: z.number(),
+  }),
 });
 
 export const ProjectPaginationCacheSchema = z.object({
